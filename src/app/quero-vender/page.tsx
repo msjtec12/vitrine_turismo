@@ -195,73 +195,82 @@ export default async function QueroVenderPage() {
 
       {/* Pricing / Plans Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-12">
+        <div className="text-center max-w-2xl mx-auto mb-10">
           <span className="text-xs font-bold uppercase tracking-wider text-[#C85A32]">
-            Planos Acessíveis
+            Plano Único & Acessível
           </span>
           <h2 className="font-serif font-bold text-3xl text-[#1B4332] mt-1">
-            Escolha como divulgar seu ateliê
+            Invista na visibilidade do seu ateliê
           </h2>
           <p className="text-xs sm:text-sm text-[#7F4F24] mt-2">
-            Comece no plano gratuito e evolua para maior visibilidade quando quiser.
+            Tenha sua vitrine completa, receba contatos diretos no WhatsApp e faça parte do roteiro turístico oficial.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
+        <div className="max-w-xl mx-auto">
           {mockPlans.map((plan) => (
             <div
               key={plan.id}
-              className={`bg-white rounded-3xl p-8 border flex flex-col justify-between transition-all duration-300 ${
-                plan.popular
-                  ? 'border-[#C85A32] shadow-artisan-hover ring-2 ring-[#C85A32]/20 relative'
-                  : 'border-[#EDE5D8] shadow-xs hover:shadow-md'
-              }`}
+              className="bg-white rounded-3xl p-8 sm:p-10 border border-[#C85A32] shadow-artisan-hover ring-2 ring-[#C85A32]/20 relative flex flex-col justify-between"
             >
-              {plan.popular && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#C85A32] text-white text-[10px] font-bold uppercase tracking-wider px-3.5 py-1 rounded-full shadow-xs">
-                  Mais Escolhido
-                </div>
-              )}
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#C85A32] text-white text-[10px] font-bold uppercase tracking-wider px-4 py-1 rounded-full shadow-xs">
+                ⭐ Vitrine Completa
+              </div>
 
               <div>
-                <h3 className="font-serif font-bold text-2xl text-[#1B4332]">
-                  {plan.name}
-                </h3>
-                <p className="text-xs text-[#7F4F24] mt-1 min-h-[36px]">
+                <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
+                  <h3 className="font-serif font-bold text-2xl text-[#1B4332]">
+                    {plan.name}
+                  </h3>
+                  <div className="flex items-baseline gap-1">
+                    <span className="font-serif font-extrabold text-4xl text-[#1B4332]">
+                      R$ {plan.price.toFixed(2).replace('.', ',')}
+                    </span>
+                    <span className="text-xs text-[#7F4F24] font-medium">
+                      {plan.period}
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-xs sm:text-sm text-[#7F4F24] mt-2">
                   {plan.description}
                 </p>
 
-                <div className="my-6 pb-6 border-b border-[#EDE5D8]">
-                  <span className="font-serif font-extrabold text-4xl text-[#1B4332]">
-                    {plan.price === 0 ? 'Grátis' : `R$ ${plan.price.toFixed(2).replace('.', ',')}`}
-                  </span>
-                  {plan.period && (
-                    <span className="text-xs text-[#7F4F24] font-medium ml-1">
-                      {plan.period}
-                    </span>
-                  )}
+                <div className="my-6 pt-6 border-t border-[#EDE5D8]">
+                  <h4 className="font-serif font-bold text-sm text-[#1B4332] mb-3">
+                    O que está incluso no seu plano:
+                  </h4>
+                  <ul className="space-y-3 text-xs sm:text-sm text-[#4A3525]">
+                    {plan.features.map((feat, i) => (
+                      <li key={i} className="flex items-start gap-2.5">
+                        <CheckCircle2 size={16} className="text-[#2D6A4F] shrink-0 mt-0.5" />
+                        <span>{feat}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-
-                <ul className="space-y-3 mb-8 text-xs text-[#4A3525]">
-                  {plan.features.map((feat, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      <CheckCircle2 size={15} className="text-[#2D6A4F] shrink-0 mt-0.5" />
-                      <span>{feat}</span>
-                    </li>
-                  ))}
-                </ul>
               </div>
 
-              <Link
-                href="/quero-vender/cadastro"
-                className={`w-full py-3.5 rounded-xl font-bold text-xs text-center transition-colors block ${
-                  plan.popular
-                    ? 'bg-[#C85A32] hover:bg-[#A4421F] text-white shadow-xs'
-                    : 'bg-[#FAF7F2] hover:bg-[#EDE5D8] text-[#1B4332]'
-                }`}
-              >
-                {plan.buttonText}
-              </Link>
+              <div className="pt-6 border-t border-[#EDE5D8] space-y-3">
+                <a
+                  href={plan.whatsappUrl || 'https://wa.me/5516991551200?text=Ol%C3%A1!%20Tenho%20interesse%20em%20anunciar%20no%20Descubra%20Artes%20(Plano%20R%24%2049%2C90%2Fm%C3%AAs).%20Gostaria%20de%20mais%20informa%C3%A7%C3%B5es.'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-4 rounded-2xl bg-[#25D366] hover:bg-[#1EBE5B] text-white font-bold text-sm text-center transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <MessageCircle size={18} />
+                  <span>Falar com Atendimento no WhatsApp: (16) 99155-1200</span>
+                </a>
+
+                <div className="text-center">
+                  <Link
+                    href="/quero-vender/cadastro"
+                    className="text-xs text-[#7F4F24] hover:text-[#C85A32] font-semibold underline"
+                  >
+                    Ou preencha o pré-cadastro da sua loja online
+                  </Link>
+                </div>
+              </div>
             </div>
           ))}
         </div>

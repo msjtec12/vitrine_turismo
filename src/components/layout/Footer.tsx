@@ -26,7 +26,7 @@ export default function Footer() {
             href="/quero-vender"
             className="px-8 py-4 rounded-2xl bg-[#C85A32] hover:bg-[#A4421F] text-white font-bold text-base transition-all shadow-lg hover:scale-102 shrink-0 text-center"
           >
-            Cadastrar Minha Loja Grátis
+            Anunciar Meu Ateliê
           </Link>
         </div>
 

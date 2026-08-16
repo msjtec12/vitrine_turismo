@@ -1066,41 +1066,29 @@ export const mockReviews: Review[] = [
   }
 ];
 
-// Plans definition for Quero Vender / Painel
 export const mockPlans = [
   {
-    id: 'plan-free',
-    name: 'Plano Gratuito',
-    price: 0,
-    period: 'Sempre gratuito',
-    description: 'Perfil básico essencial para expor suas criações e receber contatos no WhatsApp.',
-    features: [
-      'Cadastro completo do produtor',
-      'Informações da loja e história',
-      'Botão direto de WhatsApp',
-      'Link do Instagram vinculado',
-      'Até 5 produtos cadastrados',
-      'Presença no mapa da cidade e categoria',
-    ],
-    buttonText: 'Cadastrar Minha Loja Grátis',
-    popular: false,
-  },
-  {
     id: 'plan-pro',
-    name: 'Plano Profissional',
-    price: 29.90,
+    name: 'Plano Produtor & Ateliê',
+    price: 49.90,
     period: '/mês',
-    description: 'Para produtores e ateliês que buscam maior exposição e conversão turística.',
+    description: 'Divulgue sua arte, conte sua história e receba contatos de turistas direto no seu WhatsApp sem comissões.',
     features: [
-      'Produtos e peças ilimitadas',
-      'Mais fotos e galeria expandida',
-      'Destaque nas buscas e categorias',
-      'Publicação na área de Ofertas Locais',
+      'Página exclusiva e personalizada do seu ateliê',
+      'Cadastro ilimitado de peças e produtos',
+      'Fotos em alta resolução e galeria de produção',
+      'Botão de contato direto no seu WhatsApp',
+      'Link do Instagram e redes sociais vinculado',
+      'Localização no mapa turístico e roteiro da cidade',
       'Selo Oficial de Produtor Verificado ✓',
+      'Destaque nas buscas e categorias',
+      'Participação na vitrine de Ofertas Locais',
       'Painel com estatísticas de visualizações e cliques',
-      'Maior exposição na vitrine regional',
+      '100% livre de comissões sobre vendas',
     ],
-    buttonText: 'Quero Plano Profissional',
+    buttonText: 'Contratar no WhatsApp (16) 99155-1200',
+    whatsappNumber: '16991551200',
+    whatsappUrl: 'https://wa.me/5516991551200?text=Ol%C3%A1!%20Tenho%20interesse%20em%20anunciar%20meu%20ateli%C3%AA%20no%20Descubra%20Artes%20(Plano%20R%24%2049%2C90%2Fm%C3%AAs).%20Gostaria%20de%20mais%20informa%C3%A7%C3%B5es.',
     popular: true,
   },
 ];

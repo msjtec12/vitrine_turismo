@@ -51,58 +51,61 @@ export default function PainelDestaquesPage() {
       </div>
 
       {/* Plans Comparison */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="max-w-xl mx-auto">
         {mockPlans.map((plan) => {
-          const isThisPlan =
-            (plan.id === 'plan-free' && currentPlan === 'FREE') ||
-            (plan.id === 'plan-pro' && currentPlan === 'PRO') ||
-            (plan.id === 'plan-premium' && currentPlan === 'PREMIUM');
+          const isThisPlan = (plan.id === 'plan-pro' && (currentPlan === 'PRO' || currentPlan === 'PREMIUM'));
 
           return (
             <div
               key={plan.id}
-              className={`bg-white p-6 rounded-3xl border flex flex-col justify-between ${
+              className={`bg-white p-6 sm:p-8 rounded-3xl border flex flex-col justify-between ${
                 isThisPlan
-                  ? 'border-[#C85A32] ring-2 ring-[#C85A32]/20 shadow-lg'
-                  : 'border-[#EDE5D8] shadow-xs'
+                  ? 'border-[#2D6A4F] ring-2 ring-[#2D6A4F]/20 shadow-lg'
+                  : 'border-[#C85A32] ring-2 ring-[#C85A32]/20 shadow-md'
               }`}
             >
               <div className="space-y-3">
-                {isThisPlan && (
-                  <span className="inline-block bg-[#D8F3DC] text-[#1B4332] text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase">
-                    ✓ Seu Plano Atual
+                {isThisPlan ? (
+                  <span className="inline-block bg-[#D8F3DC] text-[#1B4332] text-[10px] font-bold px-3 py-1 rounded-full uppercase">
+                    ✓ Seu Plano Atual Ativo
+                  </span>
+                ) : (
+                  <span className="inline-block bg-[#C85A32] text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase">
+                    ⭐ Vitrine Completa
                   </span>
                 )}
-                <h3 className="font-serif font-bold text-xl text-[#1B4332]">
+                <h3 className="font-serif font-bold text-2xl text-[#1B4332]">
                   {plan.name}
                 </h3>
                 <div className="text-3xl font-extrabold font-serif text-[#2C2623]">
-                  {plan.price === 0 ? 'Grátis' : `R$ ${plan.price.toFixed(2).replace('.', ',')}`}
+                  R$ {plan.price.toFixed(2).replace('.', ',')}
                   <span className="text-xs font-sans text-[#7F4F24] font-normal ml-1">
                     {plan.period}
                   </span>
                 </div>
-                <ul className="space-y-2 text-xs text-[#4A3525] pt-3 border-t border-[#EDE5D8]">
+                <p className="text-xs text-[#7F4F24]">
+                  {plan.description}
+                </p>
+                <ul className="space-y-2.5 text-xs text-[#4A3525] pt-3 border-t border-[#EDE5D8]">
                   {plan.features.map((f, i) => (
-                    <li key={i} className="flex items-start gap-1.5">
-                      <CheckCircle2 size={14} className="text-[#2D6A4F] shrink-0 mt-0.5" />
+                    <li key={i} className="flex items-start gap-2">
+                      <CheckCircle2 size={15} className="text-[#2D6A4F] shrink-0 mt-0.5" />
                       <span>{f}</span>
                     </li>
                   ))}
                 </ul>
               </div>
 
-              <div className="pt-6 mt-4 border-t border-[#EDE5D8]">
-                <button
-                  disabled={isThisPlan}
-                  className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all ${
-                    isThisPlan
-                      ? 'bg-[#EDE5D8] text-[#7F4F24] cursor-default'
-                      : 'bg-[#1B4332] text-white hover:bg-[#2D6A4F] cursor-pointer'
-                  }`}
+              <div className="pt-6 mt-4 border-t border-[#EDE5D8] space-y-2">
+                <a
+                  href={`https://wa.me/5516991551200?text=${encodeURIComponent(`Olá! Sou do ateliê "${store?.name || 'Meu Ateliê'}" e gostaria de ativar/renovar meu plano no Descubra Artes (R$ 49,90/mês).`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3.5 rounded-2xl bg-[#25D366] hover:bg-[#1EBE5B] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all"
                 >
-                  {isThisPlan ? 'Plano Atual' : 'Contratar Destaque'}
-                </button>
+                  <Sparkles size={14} />
+                  <span>Falar com o Suporte no WhatsApp (16) 99155-1200</span>
+                </a>
               </div>
             </div>
           );
