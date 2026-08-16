@@ -19,6 +19,17 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function syncAuthCookies(profile: UserProfile | null) {
+  if (typeof document === 'undefined') return;
+  if (profile) {
+    document.cookie = `descubra_artes_role=${profile.role}; path=/; max-age=604800; SameSite=Lax`;
+    document.cookie = `descubra_artes_user=${encodeURIComponent(JSON.stringify(profile))}; path=/; max-age=604800; SameSite=Lax`;
+  } else {
+    document.cookie = 'descubra_artes_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+    document.cookie = 'descubra_artes_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [activeStoreId, setActiveStoreIdState] = useState<string>('');
@@ -43,7 +54,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const savedUser = localStorage.getItem('descubra_artes_user');
       const savedStore = localStorage.getItem('descubra_artes_store_id');
       if (savedUser) {
-        setUser(JSON.parse(savedUser));
+        const parsed = JSON.parse(savedUser);
+        setUser(parsed);
+        syncAuthCookies(parsed);
       }
       if (savedStore) {
         setActiveStoreIdState(savedStore);
@@ -65,6 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             createdAt: session.user.created_at,
           };
           setUser(profile);
+          syncAuthCookies(profile);
           try {
             localStorage.setItem('descubra_artes_user', JSON.stringify(profile));
           } catch {}
@@ -85,11 +99,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             createdAt: session.user.created_at,
           };
           setUser(profile);
+          syncAuthCookies(profile);
           try {
             localStorage.setItem('descubra_artes_user', JSON.stringify(profile));
           } catch {}
         } else {
           setUser(null);
+          syncAuthCookies(null);
           try {
             localStorage.removeItem('descubra_artes_user');
           } catch {}
@@ -124,6 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           createdAt: data.user.created_at,
         };
         setUser(profile);
+        syncAuthCookies(profile);
         try {
           localStorage.setItem('descubra_artes_user', JSON.stringify(profile));
         } catch {}
@@ -158,6 +175,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     setUser(profile);
+    syncAuthCookies(profile);
     try {
       localStorage.setItem('descubra_artes_user', JSON.stringify(profile));
     } catch {}
@@ -183,6 +201,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       createdAt: new Date().toISOString(),
     };
     setUser(profile);
+    syncAuthCookies(profile);
     try {
       localStorage.setItem('descubra_artes_user', JSON.stringify(profile));
       if (storeId) {
@@ -205,6 +224,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch {}
     }
     setUser(null);
+    syncAuthCookies(null);
     setActiveStoreId('');
     try {
       localStorage.removeItem('descubra_artes_user');
