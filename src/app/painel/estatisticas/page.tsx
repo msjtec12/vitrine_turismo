@@ -23,10 +23,6 @@ export default function PainelEstatisticasPage() {
         const s = await storeService.getStoreByEmail(user.email);
         if (s) targetStoreId = s.id;
       }
-      if (!targetStoreId) {
-        const all = await storeService.getAllStoresForAdmin();
-        targetStoreId = all[0]?.id || '';
-      }
       if (targetStoreId) {
         const [loadedStore, res] = await Promise.all([
           storeService.getStoreById(targetStoreId),
@@ -34,6 +30,27 @@ export default function PainelEstatisticasPage() {
         ]);
         if (loadedStore) setStore(loadedStore);
         setStats(res);
+      } else {
+        setStore(null);
+        setStats({
+          storeViews: 0,
+          productViews: 0,
+          whatsappClicks: 0,
+          favorites: 0,
+          viewsCount: 0,
+          whatsappClicksCount: 0,
+          favoritesCount: 0,
+          totalProducts: 0,
+          conversionRate: '0.0',
+          chartData: [
+            { label: 'Seg', date: 'Seg', views: 0, clicks: 0 },
+            { label: 'Ter', date: 'Ter', views: 0, clicks: 0 },
+            { label: 'Qua', date: 'Qua', views: 0, clicks: 0 },
+            { label: 'Qui', date: 'Qui', views: 0, clicks: 0 },
+            { label: 'Sex', date: 'Sex', views: 0, clicks: 0 },
+            { label: 'Sáb', date: 'Sáb', views: 0, clicks: 0 },
+          ],
+        });
       }
       setLoading(false);
     }

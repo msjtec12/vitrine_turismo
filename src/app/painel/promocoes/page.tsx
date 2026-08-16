@@ -22,10 +22,6 @@ export default function PainelPromocoesPage() {
         const s = await storeService.getStoreByEmail(user.email);
         if (s) targetStoreId = s.id;
       }
-      if (!targetStoreId) {
-        const all = await storeService.getAllStoresForAdmin();
-        targetStoreId = all[0]?.id || '';
-      }
       if (targetStoreId) {
         const [loadedStore, prods] = await Promise.all([
           storeService.getStoreById(targetStoreId),
@@ -33,6 +29,9 @@ export default function PainelPromocoesPage() {
         ]);
         if (loadedStore) setStore(loadedStore);
         setProducts(prods);
+      } else {
+        setStore(null);
+        setProducts([]);
       }
       setLoading(false);
     }

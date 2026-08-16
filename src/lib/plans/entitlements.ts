@@ -65,21 +65,25 @@ export function getStoreEffectiveEntitlements(
 ): EffectiveEntitlements {
   if (!store) {
     const freeBase = PLAN_LIMITS.FREE;
+    const usedProducts = currentProductsCount || 0;
+    const maxProducts = freeBase.maxProducts;
+    const remainingProducts = maxProducts !== null ? Math.max(0, maxProducts - usedProducts) : null;
+    const canAddProduct = maxProducts === null || usedProducts < maxProducts;
     return {
       ...freeBase,
       effectivePlan: 'FREE',
       isExpired: false,
-      isActive: false,
+      isActive: true,
       isSuspended: false,
       isBlocked: false,
       isPending: false,
       isVerifiedEffective: false,
       isFeaturedEffective: false,
-      usedProducts: 0,
-      remainingProducts: 10,
-      canAddProduct: false,
-      productLimitPercentage: 0,
-      lockReason: 'Loja não encontrada',
+      usedProducts,
+      remainingProducts,
+      canAddProduct,
+      productLimitPercentage: maxProducts !== null ? Math.min(100, Math.round((usedProducts / maxProducts) * 100)) : 0,
+      lockReason: canAddProduct ? undefined : `Seu plano atual permite até ${maxProducts} produtos. Faça upgrade para continuar cadastrando.`,
     };
   }
 
