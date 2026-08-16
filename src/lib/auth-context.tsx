@@ -47,28 +47,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch {}
   };
-
   useEffect(() => {
-    // 1. Check local session storage
+    // localStorage is only used to restore the storeId to avoid flicker.
+    // The real auth session is always validated via Supabase getSession() below.
     try {
-      const savedUser = localStorage.getItem('descubra_artes_user');
       const savedStore = localStorage.getItem('descubra_artes_store_id');
-      if (savedUser) {
-        const parsed = JSON.parse(savedUser);
-        setUser(parsed);
-        syncAuthCookies(parsed);
-      }
       if (savedStore) {
         setActiveStoreIdState(savedStore);
       }
     } catch {}
 
-    // 2. Check Supabase Auth session if active
+    // Check Supabase Auth session
     if (supabase) {
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (session?.user) {
           const userEmail = session.user.email || '';
-          const role: UserRole = userEmail.includes('admin') ? 'ADMIN' : 'ARTISAN';
+          const role: UserRole = userEmail === 'admin@descubraartes.com.br' ? 'ADMIN' : 'ARTISAN';
           const profile: UserProfile = {
             id: session.user.id,
             email: userEmail,
@@ -89,7 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
         if (session?.user) {
           const userEmail = session.user.email || '';
-          const role: UserRole = userEmail.includes('admin') ? 'ADMIN' : 'ARTISAN';
+          const role: UserRole = userEmail === 'admin@descubraartes.com.br' ? 'ADMIN' : 'ARTISAN';
           const profile: UserProfile = {
             id: session.user.id,
             email: userEmail,
@@ -123,7 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loginWithCredentials = async (email: string, password: string): Promise<{ user: UserProfile; role: UserRole }> => {
     const cleanEmail = email.toLowerCase().trim();
 
-    // Try Supabase Auth first
+    // Supabase Auth is the ONLY valid authentication path
     if (supabase) {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: cleanEmail,
@@ -131,7 +125,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (!error && data.user) {
-        const role: UserRole = cleanEmail.includes('admin') ? 'ADMIN' : 'ARTISAN';
+        const role: UserRole = cleanEmail === 'admin@descubraartes.com.br' ? 'ADMIN' : 'ARTISAN';
         const profile: UserProfile = {
           id: data.user.id,
           email: cleanEmail,
@@ -155,40 +149,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         return { user: profile, role };
       }
+
+      // Supabase returned an error — reject login with explicit message
+      throw new Error('E-mail ou senha incorretos. Verifique seus dados e tente novamente.');
     }
 
-    // Direct credentials verification
-    let role: UserRole = 'ARTISAN';
-    let fullName = cleanEmail.split('@')[0];
-
-    if (cleanEmail === 'admin@descubraartes.com.br' || cleanEmail.includes('admin')) {
-      role = 'ADMIN';
-      fullName = 'Administrador Regional';
-    }
-
-    const profile: UserProfile = {
-      id: `user-${Date.now()}`,
-      email: cleanEmail,
-      fullName,
-      role,
-      createdAt: new Date().toISOString(),
-    };
-
-    setUser(profile);
-    syncAuthCookies(profile);
-    try {
-      localStorage.setItem('descubra_artes_user', JSON.stringify(profile));
-    } catch {}
-
-    // Resolve store for email
-    import('./data/store-service').then(({ storeService }) => {
-      storeService.getStoreByEmail(cleanEmail).then((s) => {
-        if (s) setActiveStoreId(s.id);
-        else setActiveStoreId('');
-      });
-    });
-
-    return { user: profile, role };
+    // No Supabase client available — hard block
+    throw new Error('Serviço de autenticação indisponível. Tente novamente mais tarde.');
   };
 
   const loginWithEmail = (email: string, role: UserRole = 'ARTISAN', storeId?: string, fullName?: string) => {
