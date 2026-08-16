@@ -42,6 +42,10 @@ export default function ProductCard({
 
         {/* Top Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10 pointer-events-none">
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#1B4332]/90 backdrop-blur-xs text-white uppercase tracking-wider shadow-xs">
+            <Sparkles size={10} className="text-[#E9C46A]" />
+            <span>Produto Local</span>
+          </span>
           {product.isPromo && (
             <PromotionBadge discountPercent={product.promoDiscountPercent} />
           )}
@@ -58,7 +62,7 @@ export default function ProductCard({
             toggleProductFavorite(product);
           }}
           aria-label={isFav ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
-          className={`absolute top-3 right-3 p-2.5 rounded-full backdrop-blur-md transition-all duration-200 z-10 ${
+          className={`absolute top-3 right-3 p-2.5 rounded-full backdrop-blur-md transition-all duration-200 z-10 cursor-pointer ${
             isFav
               ? 'bg-[#C85A32] text-white shadow-md'
               : 'bg-white/80 text-[#4A3525] hover:bg-white hover:text-[#C85A32]'
@@ -67,15 +71,20 @@ export default function ProductCard({
           <Heart size={17} className={isFav ? 'fill-white' : ''} />
         </button>
 
-        {/* City Tag on Image bottom */}
-        {product.city && (
-          <div className="absolute bottom-2.5 left-2.5 pointer-events-none">
-            <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-0.5 rounded-md bg-black/60 backdrop-blur-xs text-white">
-              <MapPin size={11} className="text-[#E9C46A]" />
-              <span>{product.city.name} - {product.city.uf}</span>
+        {/* City & Category Tag on Image bottom */}
+        <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between pointer-events-none">
+          {product.city && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-xs text-white">
+              <MapPin size={10} className="text-[#E9C46A]" />
+              <span>{product.city.name}</span>
             </span>
-          </div>
-        )}
+          )}
+          {product.category && (
+            <span className="inline-flex items-center text-[10px] font-medium px-2 py-0.5 rounded-md bg-white/90 backdrop-blur-xs text-[#1B4332] shadow-2xs">
+              {product.category.name}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Product Content */}
@@ -84,14 +93,15 @@ export default function ProductCard({
           {/* Store Name */}
           {showStore && product.store && (
             <div className="flex items-center gap-1 text-xs text-[#7F4F24] font-medium mb-1.5">
+              <span className="text-[11px] text-[#9E9188]">Por</span>
               <Link
                 href={`/loja/${product.store.slug}`}
-                className="hover:text-[#C85A32] transition-colors truncate max-w-[200px]"
+                className="hover:text-[#C85A32] transition-colors truncate max-w-[190px] font-semibold text-[#1B4332]"
               >
                 {product.store.name}
               </Link>
               {product.store.verified && (
-                <span title="Artesão Verificado" className="inline-flex">
+                <span title="Produtor Verificado" className="inline-flex">
                   <CheckCircle2 size={13} className="text-[#2D6A4F] shrink-0" />
                 </span>
               )}
@@ -100,7 +110,7 @@ export default function ProductCard({
 
           {/* Product Title */}
           <Link href={`/produto/${product.slug}`} className="block group-hover:text-[#C85A32] transition-colors">
-            <h3 className="font-serif font-semibold text-base text-[#2C2623] line-clamp-2 leading-snug">
+            <h3 className="font-serif font-bold text-base text-[#2C2623] line-clamp-2 leading-snug">
               {product.name}
             </h3>
           </Link>

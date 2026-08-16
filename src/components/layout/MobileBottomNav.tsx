@@ -10,7 +10,7 @@ import { useAuth } from '@/lib/auth-context';
 export default function MobileBottomNav() {
   const pathname = usePathname();
   const { favoritesCount } = useFavorites();
-  const { role } = useAuth();
+  const { role, isLoggedIn } = useAuth();
 
   const navItems = [
     {
@@ -19,7 +19,7 @@ export default function MobileBottomNav() {
       icon: (active: boolean) => <Home size={19} strokeWidth={active ? 2.2 : 1.8} className={active ? 'fill-[#C85A32]/15' : ''} />,
     },
     {
-      label: 'Explorar',
+      label: 'Produtos',
       href: '/explorar',
       icon: (active: boolean) => <Compass size={19} strokeWidth={active ? 2.2 : 1.8} />,
     },
@@ -35,8 +35,8 @@ export default function MobileBottomNav() {
       badge: favoritesCount,
     },
     {
-      label: role === 'ADMIN' ? 'Admin' : 'Painel',
-      href: role === 'ADMIN' ? '/admin' : '/painel',
+      label: !isLoggedIn ? 'Vender' : role === 'ADMIN' ? 'Admin' : 'Painel',
+      href: !isLoggedIn ? '/quero-vender' : role === 'ADMIN' ? '/admin' : '/painel',
       icon: (active: boolean) =>
         role === 'ADMIN' ? (
           <User size={19} strokeWidth={active ? 2.2 : 1.8} />

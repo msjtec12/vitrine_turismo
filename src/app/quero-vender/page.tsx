@@ -16,9 +16,9 @@ import { storeService } from '@/lib/data/store-service';
 import { mockPlans } from '@/lib/data/mock-data';
 
 export const metadata = {
-  title: 'Quero Vender | Coloque sua arte no mapa — Descubra Artes',
+  title: 'Para Produtores | Coloque seus produtos no Descubra Artes',
   description:
-    'Crie sua vitrine digital e mostre seus produtos para pessoas que querem conhecer e comprar o que é produzido localmente em São Roque e região.',
+    'Mostre seus produtos para turistas e consumidores que procuram experiências, artesanato e produtos locais em São Roque e destinos regionais.',
 };
 
 export default async function QueroVenderPage() {
@@ -33,22 +33,22 @@ export default async function QueroVenderPage() {
           {campaign.isActive && (
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#E9C46A] text-[#1B4332] font-extrabold text-xs tracking-wider uppercase shadow-md">
               <Star size={14} className="fill-[#1B4332]" />
-              <span>Campanha: Primeiros 50 Artesãos de São Roque</span>
+              <span>Programa Produtores Fundadores</span>
             </div>
           )}
 
           <h1 className="font-serif font-extrabold text-4xl sm:text-6xl text-white max-w-3xl mx-auto tracking-tight leading-tight">
-            Coloque sua arte no mapa
+            Coloque seus produtos no Descubra Artes
           </h1>
 
           <p className="text-base sm:text-xl text-[#F4EFE6] max-w-2xl mx-auto leading-relaxed font-light">
-            Crie sua vitrine digital e mostre seus produtos para pessoas que querem conhecer e comprar o que é produzido localmente.
+            Mostre seus produtos para turistas e consumidores que procuram experiências, artesanato e produtos locais.
           </p>
 
           {/* Campaign Counter Box */}
           <div className="max-w-md mx-auto bg-white/10 backdrop-blur-md p-5 rounded-2xl border border-white/20 text-left space-y-2.5">
             <div className="flex items-center justify-between text-xs font-bold text-[#E9C46A]">
-              <span>⭐ ARTESÃOS FUNDADORES</span>
+              <span>⭐ PROGRAMA PRODUTORES FUNDADORES</span>
               <span>{campaign.count} / {campaign.target}</span>
             </div>
             <div className="w-full h-3 bg-white/20 rounded-full overflow-hidden">
@@ -58,23 +58,23 @@ export default async function QueroVenderPage() {
               />
             </div>
             <div className="flex items-center justify-between text-[11px] text-white/80">
-              <span>Garante selo vitalício de Artesão Fundador</span>
-              <span className="font-bold text-[#E9C46A]">{campaign.remaining} vagas restantes</span>
+              <span>Os primeiros produtores cadastrados terão condições especiais durante o lançamento.</span>
+              <span className="font-bold text-[#E9C46A]">{campaign.remaining} vagas</span>
             </div>
           </div>
 
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/quero-vender/cadastro"
-              className="w-full sm:w-auto px-9 py-4 rounded-2xl bg-[#C85A32] hover:bg-[#A4421F] text-white font-bold text-base shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-9 py-4 rounded-2xl bg-[#C85A32] hover:bg-[#A4421F] text-white font-bold text-base shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 flex items-center justify-center gap-2 cursor-pointer"
             >
-              <span>Criar minha loja gratuitamente</span>
+              <span>Quero cadastrar minha loja</span>
               <ArrowRight size={18} />
             </Link>
 
             <Link
               href="/painel"
-              className="w-full sm:w-auto px-7 py-4 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm transition-all border border-white/20"
+              className="w-full sm:w-auto px-7 py-4 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm transition-all border border-white/20 cursor-pointer"
             >
               Já tenho conta (Acessar Painel)
             </Link>
@@ -82,14 +82,14 @@ export default async function QueroVenderPage() {
         </div>
       </section>
 
-      {/* Why Sell Here (Benefits) */}
+      {/* Benefits List */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-12">
           <span className="text-xs font-bold uppercase tracking-wider text-[#C85A32]">
-            Sem Comissões Sobre Vendas
+            Vitrine Comercial Direta
           </span>
           <h2 className="font-serif font-bold text-3xl text-[#1B4332] mt-1">
-            Por que estar no Descubra Artes?
+            Benefícios de estar no Descubra Artes
           </h2>
         </div>
 

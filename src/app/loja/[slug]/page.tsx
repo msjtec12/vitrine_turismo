@@ -186,17 +186,17 @@ export default async function StorePage({
       </section>
 
       {/* ========================================== */}
-      {/* 3. SOBRE O ARTESÃO E PROCESSO CRIATIVO     */}
+      {/* 3. A HISTÓRIA DE QUEM FAZ                  */}
       {/* ========================================== */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-[#FAF7F2] rounded-3xl p-6 sm:p-10 border border-[#EDE5D8]">
           <div className="max-w-3xl space-y-4">
             <span className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-[#C85A32]">
               <Sparkles size={13} />
-              História & Tradição
+              Tradição & Autoria
             </span>
             <h2 className="font-serif font-bold text-2xl md:text-3xl text-[#1B4332]">
-              Sobre o Artesão & Ateliê
+              A história de quem faz
             </h2>
             <p className="text-sm sm:text-base text-[#4A3525] leading-relaxed whitespace-pre-line font-light">
               {store.story}
@@ -205,7 +205,7 @@ export default async function StorePage({
             {store.processDescription && (
               <div className="mt-6 pt-6 border-t border-[#EDE5D8] space-y-2">
                 <h3 className="font-serif font-bold text-base text-[#1B4332]">
-                  Como as peças são feitas:
+                  Processo de Produção & Técnicas Utilizadas:
                 </h3>
                 <p className="text-xs sm:text-sm text-[#6B625B] leading-relaxed">
                   {store.processDescription}
@@ -215,6 +215,16 @@ export default async function StorePage({
           </div>
         </div>
       </section>
+
+      {/* Floating WhatsApp CTA for Mobile */}
+      <WhatsAppButton
+        phone={store.whatsapp}
+        storeName={store.name}
+        storeId={store.id}
+        cityId={store.cityId}
+        variant="floating"
+        customLabel="Falar com o Produtor"
+      />
 
       {/* ========================================== */}
       {/* 4. ONDE ENCONTRAR (ENDEREÇO & MAPA)        */}

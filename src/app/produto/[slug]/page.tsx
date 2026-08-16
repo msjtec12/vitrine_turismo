@@ -167,35 +167,73 @@ export default async function ProductPage({
 
           {/* Artisan Profile Card Preview */}
           {product.store && (
-            <div className="p-4 rounded-2xl bg-white border border-[#EDE5D8] shadow-xs flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <img
-                  src={product.store.logoUrl}
-                  alt={product.store.name}
-                  className="w-13 h-13 rounded-2xl object-cover border border-[#EDE5D8] shrink-0"
-                />
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <h3 className="font-serif font-bold text-sm text-[#1B4332]">
-                      {product.store.name}
-                    </h3>
-                    {product.store.verified && (
-                      <CheckCircle2 size={13} className="text-[#2D6A4F]" />
+            <div className="p-5 rounded-2xl bg-white border border-[#EDE5D8] shadow-xs space-y-3">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3 min-w-0">
+                  <img
+                    src={product.store.logoUrl}
+                    alt={product.store.name}
+                    className="w-14 h-14 rounded-2xl object-cover border border-[#EDE5D8] shrink-0"
+                  />
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <h3 className="font-serif font-bold text-base text-[#1B4332] truncate">
+                        {product.store.name}
+                      </h3>
+                      {product.store.verified && (
+                        <span title="Produtor Verificado">
+                          <CheckCircle2 size={14} className="text-[#2D6A4F] shrink-0" />
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-[#7F4F24] font-medium truncate">
+                      Por {product.store.artisanName}
+                    </p>
+                    {product.store.address && (
+                      <p className="text-[11px] text-[#6B625B] flex items-center gap-1 mt-0.5 truncate">
+                        <MapPin size={11} className="text-[#C85A32] shrink-0" />
+                        <span>{product.store.neighborhood || product.store.address}</span>
+                      </p>
                     )}
                   </div>
-                  <p className="text-xs text-[#7F4F24]">
-                    Por {product.store.artisanName}
-                  </p>
                 </div>
+
+                <Link
+                  href={`/loja/${product.store.slug}`}
+                  className="px-3.5 py-2 rounded-xl bg-[#FAF7F2] hover:bg-[#EDE5D8] text-xs font-bold text-[#1B4332] transition-colors shrink-0 flex items-center gap-1"
+                >
+                  <span>Visitar Perfil</span>
+                  <ArrowRight size={12} />
+                </Link>
               </div>
 
-              <Link
-                href={`/loja/${product.store.slug}`}
-                className="px-3 py-1.5 rounded-xl bg-[#FAF7F2] hover:bg-[#EDE5D8] text-xs font-bold text-[#1B4332] transition-colors shrink-0"
-              >
-                Ver Ateliê
-              </Link>
+              {product.store.instagram && (
+                <div className="pt-2 border-t border-[#EDE5D8] flex items-center justify-between text-xs">
+                  <span className="text-[#7F4F24]">Instagram do Produtor:</span>
+                  <a
+                    href={`https://instagram.com/${product.store.instagram.replace('@', '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#C85A32] font-semibold hover:underline"
+                  >
+                    @{product.store.instagram.replace('@', '')}
+                  </a>
+                </div>
+              )}
             </div>
+          )}
+
+          {/* Floating WhatsApp CTA for Mobile */}
+          {product.store && (
+            <WhatsAppButton
+              phone={product.store.whatsapp}
+              storeName={product.store.name}
+              storeId={product.store.id}
+              productName={product.name}
+              productId={product.id}
+              cityId={product.cityId}
+              variant="floating"
+            />
           )}
 
           {/* Description & Technical details */}

@@ -26,6 +26,7 @@ interface ExplorarClientProps {
   initialCategory?: string;
   initialPromo?: boolean;
   initialFeatured?: boolean;
+  initialType?: string;
 }
 
 export default function ExplorarClient({
@@ -38,8 +39,11 @@ export default function ExplorarClient({
   initialCategory = '',
   initialPromo = false,
   initialFeatured = false,
+  initialType = '',
 }: ExplorarClientProps) {
-  const [activeTab, setActiveTab] = useState<'products' | 'stores' | 'map'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'stores' | 'map'>(
+    initialType === 'lojas' || initialType === 'produtores' ? 'stores' : 'products'
+  );
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   const [filters, setFilters] = useState<FilterOptions>({

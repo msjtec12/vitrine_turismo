@@ -19,6 +19,7 @@ export default async function ExplorarPage({
   const initialCategory = typeof params.categoria === 'string' ? params.categoria : '';
   const initialPromo = params.promocoes === 'true';
   const initialFeatured = params.destaques === 'true';
+  const initialType = typeof params.tipo === 'string' ? params.tipo : '';
 
   const cities = await storeService.getCities();
   const categories = await storeService.getCategories();
@@ -36,6 +37,7 @@ export default async function ExplorarPage({
       initialCategory={initialCategory}
       initialPromo={initialPromo}
       initialFeatured={initialFeatured}
+      initialType={initialType}
     />
   );
 }

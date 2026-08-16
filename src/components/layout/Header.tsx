@@ -16,6 +16,7 @@ import {
   LogOut,
   Flame,
   Compass,
+  Package,
 } from 'lucide-react';
 import { useFavorites } from '@/lib/favorites-context';
 import { useAuth } from '@/lib/auth-context';
@@ -195,12 +196,28 @@ export default function Header() {
           {/* Desktop Navigation Links */}
           <nav className="hidden lg:flex items-center gap-7">
             <Link
-              href="/explorar"
+              href="/"
               className={`text-sm font-medium transition-colors hover:text-[#C85A32] ${
-                isActive('/explorar') ? 'text-[#C85A32] font-semibold' : 'text-[#4A3525]'
+                pathname === '/' ? 'text-[#C85A32] font-semibold' : 'text-[#4A3525]'
               }`}
             >
-              Explorar
+              Início
+            </Link>
+            <Link
+              href="/explorar"
+              className={`text-sm font-medium transition-colors hover:text-[#C85A32] ${
+                pathname === '/explorar' && !pathname.includes('tipo=lojas') ? 'text-[#C85A32] font-semibold' : 'text-[#4A3525]'
+              }`}
+            >
+              Produtos
+            </Link>
+            <Link
+              href="/explorar?tipo=lojas"
+              className={`text-sm font-medium transition-colors hover:text-[#C85A32] ${
+                pathname.includes('tipo=lojas') ? 'text-[#C85A32] font-semibold' : 'text-[#4A3525]'
+              }`}
+            >
+              Produtores
             </Link>
             <Link
               href="/cidade/sao-roque"
@@ -220,18 +237,12 @@ export default function Header() {
               <span>Ofertas</span>
             </Link>
             <Link
-              href="/mapa"
-              className={`text-sm font-medium transition-colors hover:text-[#C85A32] ${
-                isActive('/mapa') ? 'text-[#C85A32] font-semibold' : 'text-[#4A3525]'
+              href="/quero-vender"
+              className={`text-sm font-semibold transition-colors hover:text-[#C85A32] ${
+                isActive('/quero-vender') ? 'text-[#C85A32]' : 'text-[#1B4332]'
               }`}
             >
-              Mapa
-            </Link>
-            <Link
-              href="/quero-vender"
-              className="text-sm font-medium text-[#1B4332] hover:text-[#C85A32] transition-colors"
-            >
-              Quero Vender
+              Para Produtores
             </Link>
           </nav>
 
@@ -309,8 +320,16 @@ export default function Header() {
               onClick={() => setMobileMenuOpen(false)}
               className="px-3 py-2 rounded-xl text-sm font-medium text-[#4A3525] hover:bg-[#EDE5D8] flex items-center gap-2.5"
             >
-              <StoreIcon size={16} className="text-[#1B4332]" />
-              <span>Explorar Catálogo</span>
+              <Package size={16} className="text-[#1B4332]" />
+              <span>Produtos</span>
+            </Link>
+            <Link
+              href="/explorar?tipo=lojas"
+              onClick={() => setMobileMenuOpen(false)}
+              className="px-3 py-2 rounded-xl text-sm font-medium text-[#4A3525] hover:bg-[#EDE5D8] flex items-center gap-2.5"
+            >
+              <StoreIcon size={16} className="text-[#7F4F24]" />
+              <span>Produtores</span>
             </Link>
             <Link
               href="/cidade/sao-roque"
@@ -318,39 +337,38 @@ export default function Header() {
               className="px-3 py-2 rounded-xl text-sm font-medium text-[#4A3525] hover:bg-[#EDE5D8] flex items-center gap-2.5"
             >
               <MapPin size={16} className="text-[#C85A32]" />
-              <span>São Roque - SP</span>
+              <span>Cidades</span>
             </Link>
             <Link
               href="/promocoes"
               onClick={() => setMobileMenuOpen(false)}
-              className="px-3 py-2 rounded-xl text-sm font-medium text-[#C85A32] hover:bg-[#EDE5D8] flex items-center gap-2.5"
+              className="px-3 py-2 rounded-xl text-sm font-medium text-[#C85A32] hover:bg-[#EDE5D8] flex items-center gap-2.5 font-bold"
             >
               <Flame size={16} />
-              <span>Ofertas & Promoções</span>
-            </Link>
-            <Link
-              href="/mapa"
-              onClick={() => setMobileMenuOpen(false)}
-              className="px-3 py-2 rounded-xl text-sm font-medium text-[#4A3525] hover:bg-[#EDE5D8] flex items-center gap-2.5"
-            >
-              <MapPin size={16} className="text-[#2D6A4F]" />
-              <span>Mapa de Ateliês</span>
+              <span>Ofertas</span>
             </Link>
             <Link
               href="/favoritos"
               onClick={() => setMobileMenuOpen(false)}
-              className="px-3 py-2 rounded-xl text-sm font-medium text-[#4A3525] hover:bg-[#EDE5D8] flex items-center gap-2.5"
+              className="px-3 py-2 rounded-xl text-sm font-medium text-[#4A3525] hover:bg-[#EDE5D8] flex items-center justify-between"
             >
-              <Heart size={16} className="text-[#C85A32]" />
-              <span>Meus Favoritos ({favoritesCount})</span>
+              <div className="flex items-center gap-2.5">
+                <Heart size={16} className="text-[#C85A32]" />
+                <span>Favoritos</span>
+              </div>
+              {favoritesCount > 0 && (
+                <span className="px-2 py-0.5 rounded-full bg-[#C85A32] text-white text-xs font-bold">
+                  {favoritesCount}
+                </span>
+              )}
             </Link>
             <Link
               href="/quero-vender"
               onClick={() => setMobileMenuOpen(false)}
-              className="px-3 py-2 rounded-xl text-sm font-medium text-[#1B4332] hover:bg-[#EDE5D8] flex items-center gap-2.5"
+              className="px-3 py-2 rounded-xl text-sm font-bold text-[#1B4332] hover:bg-[#EDE5D8] flex items-center gap-2.5"
             >
-              <Sparkles size={16} className="text-[#D4A373]" />
-              <span>Quero Vender no Descubra Artes</span>
+              <Sparkles size={16} className="text-[#E9C46A]" />
+              <span>Para Produtores</span>
             </Link>
           </nav>
 

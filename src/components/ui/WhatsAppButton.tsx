@@ -46,12 +46,12 @@ export default function WhatsAppButton({
     setClicked(true);
     setTimeout(() => setClicked(false), 2500);
 
-    // Build personalized message
+    // Build personalized message matching Descubra Artes commercial standard
     let message = '';
     if (productName) {
-      message = `Olá! Encontrei o produto "${productName}" no Descubra Artes e gostaria de saber mais sobre disponibilidade e compra.`;
+      message = `Olá! Encontrei o produto "${productName}" no Descubra Artes e gostaria de saber mais informações.`;
     } else {
-      message = `Olá! Encontrei o ateliê "${storeName}" no Descubra Artes e gostaria de conhecer mais sobre os produtos e encomendas.`;
+      message = `Olá! Encontrei seu ateliê "${storeName}" no Descubra Artes e gostaria de saber mais informações sobre suas peças e produtos.`;
     }
 
     // Log analytics conversion

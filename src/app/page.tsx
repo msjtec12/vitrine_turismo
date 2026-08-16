@@ -48,18 +48,18 @@ export default async function HomePage() {
           {/* Slogan Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white text-xs font-semibold uppercase tracking-wider mb-6 shadow-xs animate-in slide-in-from-top duration-500">
             <Sparkles size={14} className="text-[#E9C46A]" />
-            <span>Guia de Turismo & Vitrine de Artesãos</span>
+            <span>Vitrine Digital • Artesanato • Sabores Locais</span>
           </div>
 
           {/* Main Slogan Title */}
           <h1 className="font-serif font-extrabold text-3xl sm:text-5xl lg:text-6xl text-white tracking-tight leading-[1.15] drop-shadow-md">
-            Descubra quem faz. <br className="hidden sm:inline" />
-            <span className="text-[#E9C46A]">Conheça o lugar.</span> Leve uma história.
+            Descubra produtos que <br className="hidden sm:inline" />
+            <span className="text-[#E9C46A]">contam histórias</span>
           </h1>
 
           {/* Subtitle */}
-          <p className="mt-5 max-w-2xl mx-auto text-base sm:text-lg text-white/90 font-light leading-relaxed drop-shadow-sm">
-            Encontre mestres artesãos, ateliês autorais, produtos regionais e lembranças especiais direto de quem produz em São Roque e destinos de todo o Brasil.
+          <p className="mt-5 max-w-2xl mx-auto text-base sm:text-lg text-white/95 font-light leading-relaxed drop-shadow-sm">
+            Artesanato, produtos autorais e sabores locais feitos por quem conhece cada cidade. Encontre quem faz e compre direto pelo WhatsApp.
           </p>
 
           {/* Search Bar Container */}
@@ -67,23 +67,54 @@ export default async function HomePage() {
             <SearchBar cities={cities} />
           </div>
 
-          {/* Trust Highlights */}
-          <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto text-white/90 text-xs font-medium">
-            <div className="flex items-center justify-center gap-2 bg-black/25 backdrop-blur-xs py-2 px-3 rounded-xl border border-white/10">
-              <CheckCircle2 size={15} className="text-[#E9C46A]" />
-              <span>Artesãos Verificados</span>
+          {/* Action CTAs */}
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href="/explorar"
+              className="px-7 py-3 rounded-2xl bg-[#E9C46A] hover:bg-[#D4A373] text-[#1B4332] font-bold text-xs sm:text-sm transition-all shadow-md flex items-center gap-2 cursor-pointer"
+            >
+              <span>Explorar produtos</span>
+              <ArrowRight size={15} />
+            </Link>
+
+            <Link
+              href="/explorar?tipo=lojas"
+              className="px-6 py-3 rounded-2xl bg-white/15 hover:bg-white/25 text-white font-semibold text-xs sm:text-sm transition-all border border-white/25 backdrop-blur-xs cursor-pointer"
+            >
+              <span>Conhecer produtores</span>
+            </Link>
+          </div>
+
+          {/* 3-Step How it Works Bar */}
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto text-left">
+            <div className="bg-black/30 backdrop-blur-md p-4 rounded-2xl border border-white/15 text-white space-y-1">
+              <div className="flex items-center gap-2 text-[#E9C46A] text-xs font-bold uppercase tracking-wider">
+                <span className="w-5 h-5 rounded-full bg-[#E9C46A] text-[#1B4332] flex items-center justify-center text-[10px]">1</span>
+                <span>Descubra</span>
+              </div>
+              <p className="text-xs text-white/80">
+                Explore cerâmica, madeira, vinhos, licores e presentes exclusivos.
+              </p>
             </div>
-            <div className="flex items-center justify-center gap-2 bg-black/25 backdrop-blur-xs py-2 px-3 rounded-xl border border-white/10">
-              <MessageCircle size={15} className="text-[#25D366]" />
-              <span>Contato Direto no WhatsApp</span>
+
+            <div className="bg-black/30 backdrop-blur-md p-4 rounded-2xl border border-white/15 text-white space-y-1">
+              <div className="flex items-center gap-2 text-[#E9C46A] text-xs font-bold uppercase tracking-wider">
+                <span className="w-5 h-5 rounded-full bg-[#E9C46A] text-[#1B4332] flex items-center justify-center text-[10px]">2</span>
+                <span>Conheça</span>
+              </div>
+              <p className="text-xs text-white/80">
+                Veja as fotos do ateliê, técnicas de produção e a história de quem faz.
+              </p>
             </div>
-            <div className="flex items-center justify-center gap-2 bg-black/25 backdrop-blur-xs py-2 px-3 rounded-xl border border-white/10">
-              <MapPin size={15} className="text-[#E07A5F]" />
-              <span>Roteiros & Mapas Locais</span>
-            </div>
-            <div className="flex items-center justify-center gap-2 bg-black/25 backdrop-blur-xs py-2 px-3 rounded-xl border border-white/10">
-              <Heart size={15} className="text-[#C85A32]" />
-              <span>Valorização do Produtor</span>
+
+            <div className="bg-black/30 backdrop-blur-md p-4 rounded-2xl border border-white/15 text-white space-y-1">
+              <div className="flex items-center gap-2 text-[#25D366] text-xs font-bold uppercase tracking-wider">
+                <span className="w-5 h-5 rounded-full bg-[#25D366] text-[#1B4332] flex items-center justify-center text-[10px]">3</span>
+                <span>Entre em contato</span>
+              </div>
+              <p className="text-xs text-white/80">
+                Converse e encomende direto no WhatsApp sem intermediários ou taxas.
+              </p>
             </div>
           </div>
         </div>

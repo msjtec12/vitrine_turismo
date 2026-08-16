@@ -1070,55 +1070,39 @@ export const mockReviews: Review[] = [
 export const mockPlans = [
   {
     id: 'plan-free',
-    name: 'Gratuito',
+    name: 'Plano Gratuito',
     price: 0,
     period: 'Sempre gratuito',
-    description: 'Perfeito para quem está começando e quer divulgar sua arte para turistas.',
+    description: 'Perfil básico essencial para expor suas criações e receber contatos no WhatsApp.',
     features: [
-      'Página exclusiva da loja',
-      'Até 10 produtos cadastrados',
-      'Botão direto para seu WhatsApp',
-      'Link para seu Instagram',
-      'Localização no mapa da cidade',
-      'Suporte comunitário'
+      'Cadastro completo do produtor',
+      'Informações da loja e história',
+      'Botão direto de WhatsApp',
+      'Link do Instagram vinculado',
+      'Até 5 produtos cadastrados',
+      'Presença no mapa da cidade e categoria',
     ],
-    buttonText: 'Começar Grátis',
+    buttonText: 'Cadastrar Minha Loja Grátis',
     popular: false,
   },
   {
     id: 'plan-pro',
-    name: 'Profissional',
+    name: 'Plano Profissional',
     price: 29.90,
     period: '/mês',
-    description: 'Para artesãos e ateliês estabelecidos que querem expandir suas vendas e visibilidade.',
+    description: 'Para produtores e ateliês que buscam maior exposição e conversão turística.',
     features: [
-      'Produtos ilimitados',
-      'Gestão de promoções e ofertas',
-      'Estatísticas de visualizações e WhatsApp',
-      'Galeria de fotos do processo de produção',
-      'Prioridade na busca da cidade',
-      'Selo de Artesão Recomendado'
+      'Produtos e peças ilimitadas',
+      'Mais fotos e galeria expandida',
+      'Destaque nas buscas e categorias',
+      'Publicação na área de Ofertas Locais',
+      'Selo Oficial de Produtor Verificado ✓',
+      'Painel com estatísticas de visualizações e cliques',
+      'Maior exposição na vitrine regional',
     ],
-    buttonText: 'Escolher Profissional',
+    buttonText: 'Quero Plano Profissional',
     popular: true,
   },
-  {
-    id: 'plan-premium',
-    name: 'Premium & Destaque',
-    price: 49.90,
-    period: '/mês',
-    description: 'Máxima exposição na Home do portal, páginas da cidade e guia turístico oficial.',
-    features: [
-      'Destaque no topo da Home e da Cidade',
-      'Selo Oficial de Artesão Verificado ✓',
-      'Produtos com badge "Destaque"',
-      'Relatórios avançados de conversão',
-      'Acesso prioritário a eventos e feiras parceiras',
-      'Suporte VIP via WhatsApp'
-    ],
-    buttonText: 'Quero ser Premium',
-    popular: false,
-  }
 ];
 
 // ==========================================
