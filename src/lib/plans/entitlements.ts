@@ -2,8 +2,8 @@ import { PlanType, PlanEntitlements, ManualOverrides, Store, AccountStatus, Plan
 
 export const PLAN_LIMITS: Record<PlanType, PlanEntitlements> = {
   FREE: {
-    maxProducts: 5,
-    maxPhotosPerProduct: 5,
+    maxProducts: 10,
+    maxPhotosPerProduct: 10,
     canCreateOffers: false,
     canFeatured: false,
     canVerifiedBadge: false,
@@ -76,7 +76,7 @@ export function getStoreEffectiveEntitlements(
       isVerifiedEffective: false,
       isFeaturedEffective: false,
       usedProducts: 0,
-      remainingProducts: 5,
+      remainingProducts: 10,
       canAddProduct: false,
       productLimitPercentage: 0,
       lockReason: 'Loja não encontrada',

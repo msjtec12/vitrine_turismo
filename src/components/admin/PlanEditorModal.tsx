@@ -183,7 +183,7 @@ export default function PlanEditorModal({
                       {planType === 'FREE' && <CheckCircle2 size={16} className="text-[#C85A32]" />}
                     </div>
                     <p className="text-[11px] text-[#7F4F24] mt-1">
-                      Limite de até 5 produtos. Sem ofertas ou destaques automáticos.
+                      Limite de até 10 produtos e 10 fotos por peça. Sem ofertas ou destaques automáticos.
                     </p>
                   </div>
 

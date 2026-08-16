@@ -165,7 +165,7 @@ export default async function AdminPage() {
             <div className="text-2xl font-serif font-bold text-[#1B4332] mt-1">
               {metrics.freeStores}
             </div>
-            <span className="text-[10px] text-[#7F4F24]">Até 5 produtos por ateliê</span>
+            <span className="text-[10px] text-[#7F4F24]">Até 10 produtos e 10 fotos por ateliê</span>
           </div>
 
           <div className="p-4 rounded-2xl bg-[#D8F3DC]/40 border border-[#2D6A4F]/20">
