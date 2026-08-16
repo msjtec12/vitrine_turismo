@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   MapPin,
   Heart,
@@ -22,16 +22,23 @@ import { useAuth } from '@/lib/auth-context';
 import Logo from '@/components/ui/Logo';
 
 export default function Header() {
+  const router = useRouter();
   const pathname = usePathname();
   const { favoritesCount } = useFavorites();
-  const { user, role, loginAs, logout } = useAuth();
+  const { user, role, isLoggedIn, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [roleMenuOpen, setRoleMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [cityMenuOpen, setCityMenuOpen] = useState(false);
 
   const isActive = (path: string) => {
     if (path === '/') return pathname === '/';
     return pathname.startsWith(path);
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    setUserMenuOpen(false);
+    router.push('/');
   };
 
   return (
@@ -51,46 +58,73 @@ export default function Header() {
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Quick Demo Switcher */}
-            <div className="relative">
-              <button
-                onClick={() => setRoleMenuOpen(!roleMenuOpen)}
-                className="text-[11px] font-medium bg-white/10 hover:bg-white/20 text-white px-2.5 py-0.5 rounded-md flex items-center gap-1 cursor-pointer transition-colors"
-              >
-                <span>Perfil Demo: <strong>{role === 'ARTISAN' ? 'Artesão' : role === 'ADMIN' ? 'Admin' : 'Turista'}</strong></span>
-                <ChevronDown size={12} />
-              </button>
+          <div className="flex items-center gap-4 text-xs">
+            {isLoggedIn ? (
+              <div className="relative">
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center gap-1.5 text-[11px] font-semibold text-white/90 hover:text-white cursor-pointer"
+                >
+                  <User size={13} className="text-[#D4A373]" />
+                  <span>Olá, {user?.fullName?.split(' ')[0]}</span>
+                  <ChevronDown size={11} />
+                </button>
 
-              {roleMenuOpen && (
-                <div className="absolute right-0 mt-1 w-48 bg-white text-[#2C2623] rounded-xl shadow-xl border border-[#EDE5D8] py-1 z-50 animate-in fade-in zoom-in-95 duration-150">
-                  <div className="px-3 py-1.5 text-[10px] font-bold text-[#7F4F24] uppercase tracking-wider border-b border-[#EDE5D8]">
-                    Simular Perfil
+                {userMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white text-[#2C2623] rounded-2xl shadow-xl border border-[#EDE5D8] py-1.5 z-50 animate-in fade-in duration-150">
+                    <div className="px-3.5 py-1.5 border-b border-[#EDE5D8]">
+                      <p className="text-[11px] font-bold text-[#1B4332] truncate">{user?.fullName}</p>
+                      <p className="text-[10px] text-[#7F4F24] truncate">{user?.email}</p>
+                    </div>
+
+                    {role === 'ADMIN' ? (
+                      <Link
+                        href="/admin"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="px-3.5 py-2 text-xs text-[#2D6A4F] hover:bg-[#FAF7F2] font-semibold flex items-center gap-2"
+                      >
+                        <ShieldCheck size={14} />
+                        <span>Painel Admin</span>
+                      </Link>
+                    ) : (
+                      <Link
+                        href="/painel"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="px-3.5 py-2 text-xs text-[#1B4332] hover:bg-[#FAF7F2] font-semibold flex items-center gap-2"
+                      >
+                        <StoreIcon size={14} />
+                        <span>Meu Painel do Ateliê</span>
+                      </Link>
+                    )}
+
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-3.5 py-2 text-xs text-[#C85A32] hover:bg-[#FAF7F2] font-medium flex items-center gap-2 border-t border-[#EDE5D8] cursor-pointer"
+                    >
+                      <LogOut size={13} />
+                      <span>Sair da conta</span>
+                    </button>
                   </div>
-                  <button
-                    onClick={() => { loginAs('CUSTOMER'); setRoleMenuOpen(false); }}
-                    className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-[#FAF7F2] ${role === 'CUSTOMER' ? 'font-bold text-[#C85A32]' : 'text-[#4A3525]'}`}
-                  >
-                    <Compass size={14} className="text-[#C85A32]" />
-                    <span>Turista / Visitante</span>
-                  </button>
-                  <button
-                    onClick={() => { loginAs('ARTISAN'); setRoleMenuOpen(false); }}
-                    className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-[#FAF7F2] ${role === 'ARTISAN' ? 'font-bold text-[#1B4332]' : 'text-[#4A3525]'}`}
-                  >
-                    <StoreIcon size={14} className="text-[#1B4332]" />
-                    <span>Artesão (Cerâmica da Terra)</span>
-                  </button>
-                  <button
-                    onClick={() => { loginAs('ADMIN'); setRoleMenuOpen(false); }}
-                    className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-[#FAF7F2] ${role === 'ADMIN' ? 'font-bold text-[#2D6A4F]' : 'text-[#4A3525]'}`}
-                  >
-                    <ShieldCheck size={14} className="text-[#7F4F24]" />
-                    <span>Administrador Regional</span>
-                  </button>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <Link
+                  href="/login"
+                  className="text-[11px] font-medium text-white/90 hover:text-white transition-colors"
+                >
+                  Entrar
+                </Link>
+                <span className="text-white/40">|</span>
+                <Link
+                  href="/quero-vender"
+                  className="text-[11px] font-bold text-[#D4A373] hover:text-white transition-colors flex items-center gap-1"
+                >
+                  <Sparkles size={11} />
+                  <span>Quero Vender</span>
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -146,12 +180,12 @@ export default function Header() {
                     <span>Holambra - SP</span>
                   </Link>
                   <Link
-                    href="/cidade/paraty"
+                    href="/cidade/campos-do-jordao"
                     onClick={() => setCityMenuOpen(false)}
                     className="px-4 py-2 text-xs font-medium text-[#4A3525] hover:bg-[#FAF7F2] flex items-center gap-2"
                   >
                     <MapPin size={13} className="text-[#7F4F24]" />
-                    <span>Paraty - RJ</span>
+                    <span>Campos do Jordão - SP</span>
                   </Link>
                 </div>
               )}
@@ -218,29 +252,31 @@ export default function Header() {
             </Link>
 
             {/* Role specific CTAs */}
-            {role === 'ARTISAN' ? (
-              <Link
-                href="/painel"
-                className="hidden sm:inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-[#1B4332] hover:bg-[#2D6A4F] text-white shadow-xs transition-all"
-              >
-                <StoreIcon size={15} />
-                <span>Painel do Artesão</span>
-              </Link>
-            ) : role === 'ADMIN' ? (
-              <Link
-                href="/admin"
-                className="hidden sm:inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-[#7F4F24] hover:bg-[#582F0E] text-white shadow-xs transition-all"
-              >
-                <ShieldCheck size={15} />
-                <span>Painel Admin</span>
-              </Link>
+            {isLoggedIn ? (
+              role === 'ADMIN' ? (
+                <Link
+                  href="/admin"
+                  className="hidden sm:inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-[#7F4F24] hover:bg-[#582F0E] text-white shadow-xs transition-all"
+                >
+                  <ShieldCheck size={15} />
+                  <span>Painel Admin</span>
+                </Link>
+              ) : (
+                <Link
+                  href="/painel"
+                  className="hidden sm:inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-[#1B4332] hover:bg-[#2D6A4F] text-white shadow-xs transition-all"
+                >
+                  <StoreIcon size={15} />
+                  <span>Painel do Artesão</span>
+                </Link>
+              )
             ) : (
               <Link
-                href="/quero-vender"
+                href="/quero-vender/cadastro"
                 className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold bg-[#C85A32] hover:bg-[#A4421F] text-white shadow-xs transition-all"
               >
                 <Sparkles size={14} />
-                <span>Cadastrar Loja</span>
+                <span>Cadastrar Ateliê</span>
               </Link>
             )}
 
@@ -319,20 +355,32 @@ export default function Header() {
           </nav>
 
           <div className="pt-3 border-t border-[#EDE5D8] flex flex-col gap-2">
-            <Link
-              href="/painel"
-              onClick={() => setMobileMenuOpen(false)}
-              className="w-full py-2.5 rounded-xl text-center text-xs font-bold bg-[#1B4332] text-white"
-            >
-              Painel do Artesão
-            </Link>
-            <Link
-              href="/admin"
-              onClick={() => setMobileMenuOpen(false)}
-              className="w-full py-2.5 rounded-xl text-center text-xs font-bold bg-[#7F4F24] text-white"
-            >
-              Painel Administrador
-            </Link>
+            {isLoggedIn ? (
+              <Link
+                href={role === 'ADMIN' ? '/admin' : '/painel'}
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full py-2.5 rounded-xl text-center text-xs font-bold bg-[#1B4332] text-white"
+              >
+                {role === 'ADMIN' ? 'Acessar Painel Admin' : 'Acessar Painel do Artesão'}
+              </Link>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                <Link
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="py-2.5 rounded-xl text-center text-xs font-bold bg-[#FAF7F2] border border-[#EDE5D8] text-[#1B4332]"
+                >
+                  Entrar
+                </Link>
+                <Link
+                  href="/quero-vender/cadastro"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="py-2.5 rounded-xl text-center text-xs font-bold bg-[#C85A32] text-white"
+                >
+                  Cadastrar Ateliê
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       )}

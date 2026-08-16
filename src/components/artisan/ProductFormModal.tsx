@@ -286,7 +286,7 @@ export default function ProductFormModal({
             />
 
             <div className="text-[11px] text-[#7F4F24] font-medium mt-3 mb-1.5">
-              Ou escolha uma imagem do catálogo de demonstração:
+              Ou selecione uma foto de exemplo rápida:
             </div>
             <div className="flex items-center gap-2 overflow-x-auto pb-1">
               {sampleImages.map((sImg, i) => (
