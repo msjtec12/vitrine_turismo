@@ -468,11 +468,19 @@ export const storeService = {
   },
 
   async getProductBySlug(slug: string): Promise<Product | null> {
-    const dbProd = await fetchFromSupabase<any>(`products?slug=eq.${slug.toLowerCase()}&select=*`);
+    const cleanSlug = slug.toLowerCase();
+    let product: Product | null = null;
+    const dbProd = await fetchFromSupabase<any>(`products?slug=eq.${cleanSlug}&select=*`);
     if (dbProd && dbProd[0]) {
-      return mapDbProductToProduct(dbProd[0]);
+      product = mapDbProductToProduct(dbProd[0]);
+    } else {
+      const found = runtimeProducts.find((p) => p.slug.toLowerCase() === cleanSlug);
+      if (found) product = { ...found };
     }
-    const product = runtimeProducts.find((p) => p.slug.toLowerCase() === slug.toLowerCase());
+    if (product && !product.store && product.storeId) {
+      const store = await this.getStoreById(product.storeId);
+      if (store) product.store = store;
+    }
     return product || null;
   },
 
