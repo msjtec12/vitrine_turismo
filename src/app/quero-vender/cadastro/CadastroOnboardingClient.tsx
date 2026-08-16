@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { storeService } from '@/lib/data/store-service';
 import { City, Category } from '@/types';
+import { useAuth } from '@/lib/auth-context';
 import Logo from '@/components/ui/Logo';
 import ImageUpload from '@/components/ui/ImageUpload';
 import CepAddressForm from '@/components/ui/CepAddressForm';
@@ -187,6 +188,8 @@ export default function CadastroOnboardingClient({
     return parts.join(', ');
   };
 
+  const { loginWithEmail, setActiveStoreId } = useAuth();
+
   const handleSubmitRegistration = async () => {
     setLoading(true);
     setError('');
@@ -194,7 +197,7 @@ export default function CadastroOnboardingClient({
     const fullAddress = formatFullAddress();
 
     try {
-      await storeService.createArtisanSelfService({
+      const { store, artisan } = await storeService.createArtisanSelfService({
         fullName,
         email,
         phone,
@@ -220,6 +223,10 @@ export default function CadastroOnboardingClient({
             images: [p.imageUrl],
           })),
       });
+
+      // Automatically authenticate session for the new artisan
+      loginWithEmail(email, 'ARTISAN', store.id, fullName);
+      setActiveStoreId(store.id);
 
       setStep(5);
     } catch (err: any) {

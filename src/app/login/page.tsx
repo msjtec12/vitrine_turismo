@@ -9,7 +9,7 @@ import Logo from '@/components/ui/Logo';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { loginWithCredentials } = useAuth();
+  const { loginWithCredentials, setActiveStoreId } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -27,6 +27,11 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const res = await loginWithCredentials(email, password);
+      const { storeService } = await import('@/lib/data/store-service');
+      const userStore = await storeService.getStoreByEmail(email);
+      if (userStore) {
+        setActiveStoreId(userStore.id);
+      }
       if (res.role === 'ADMIN') {
         router.push('/admin');
       } else {

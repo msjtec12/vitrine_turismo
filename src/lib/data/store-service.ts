@@ -32,6 +32,14 @@ const SUPABASE_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3ZW11ZnRuZnNscWVqYWFoa3ZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5MDg4NzYsImV4cCI6MjEwMjQ4NDg3Nn0.ro-uU8-WbZyoXpymhUPWyy8yMl7qefHMiCsPE-NXg2M';
 
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 // Production Supabase Fetch Helper
 async function fetchFromSupabase<T>(endpoint: string): Promise<T[] | null> {
   if (!SUPABASE_URL || !SUPABASE_KEY) return null;
@@ -60,6 +68,37 @@ let runtimeReviews: Review[] = [...mockReviews];
 let runtimeAuditLogs: AuditLog[] = [...mockAuditLogs];
 let runtimeNotifications: Notification[] = [...mockNotifications];
 let runtimeClicks: Array<{ storeId: string; productId?: string; date: string }> = [];
+
+// Hydrate from localStorage on client side
+if (typeof window !== 'undefined') {
+  try {
+    const savedStores = localStorage.getItem('descubra_artes_custom_stores');
+    const savedArtisans = localStorage.getItem('descubra_artes_custom_artisans');
+    const savedProds = localStorage.getItem('descubra_artes_custom_products');
+    if (savedStores) {
+      const parsed = JSON.parse(savedStores);
+      runtimeStores = [...parsed, ...runtimeStores.filter((s) => !parsed.some((p: any) => p.id === s.id))];
+    }
+    if (savedArtisans) {
+      const parsed = JSON.parse(savedArtisans);
+      runtimeArtisans = [...parsed, ...runtimeArtisans.filter((a) => !parsed.some((p: any) => p.id === a.id))];
+    }
+    if (savedProds) {
+      const parsed = JSON.parse(savedProds);
+      runtimeProducts = [...parsed, ...runtimeProducts.filter((p) => !parsed.some((ps: any) => ps.id === p.id))];
+    }
+  } catch {}
+}
+
+function persistLocalCustomData() {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('descubra_artes_custom_stores', JSON.stringify(runtimeStores));
+      localStorage.setItem('descubra_artes_custom_artisans', JSON.stringify(runtimeArtisans));
+      localStorage.setItem('descubra_artes_custom_products', JSON.stringify(runtimeProducts));
+    } catch {}
+  }
+}
 
 function mapDbCityToCity(db: any): City {
   return {
@@ -96,7 +135,7 @@ function mapDbStoreToStore(db: any): Store {
   const category = mockCategories.find((c) => c.id === db.category_id);
   return {
     id: db.id,
-    userId: db.user_id || 'user-1',
+    userId: db.user_id || db.artisan_id || 'user-1',
     artisanId: db.artisan_id,
     cityId: db.city_id,
     categoryId: db.category_id,
@@ -303,12 +342,31 @@ export const storeService = {
   },
 
   async getStoreById(id: string): Promise<Store | null> {
+    if (!id) return null;
     const dbStore = await fetchFromSupabase<any>(`stores?id=eq.${id}&select=*`);
     if (dbStore && dbStore[0]) {
       return mapDbStoreToStore(dbStore[0]);
     }
-    const store = runtimeStores.find((s) => s.id === id || s.slug === id) || runtimeStores[0];
+    const store = runtimeStores.find((s) => s.id === id || s.slug === id || s.userId === id || s.artisanId === id);
     return store || null;
+  },
+
+  async getStoreByEmail(email: string): Promise<Store | null> {
+    if (!email) return null;
+    const cleanEmail = email.toLowerCase().trim();
+    // In runtime
+    const artisan = runtimeArtisans.find((a) => a.email.toLowerCase() === cleanEmail);
+    if (artisan) {
+      const store = runtimeStores.find((s) => s.artisanId === artisan.id || s.userId === artisan.userId);
+      if (store) return store;
+    }
+    // In Supabase
+    const dbArt = await fetchFromSupabase<any>(`artisans?email=eq.${encodeURIComponent(cleanEmail)}&select=*`);
+    if (dbArt && dbArt[0]) {
+      const dbStore = await fetchFromSupabase<any>(`stores?artisan_id=eq.${dbArt[0].id}&select=*`);
+      if (dbStore && dbStore[0]) return mapDbStoreToStore(dbStore[0]);
+    }
+    return null;
   },
 
   async getAllStoresForAdmin(): Promise<Store[]> {
@@ -519,9 +577,9 @@ export const storeService = {
       images?: string[];
     }>;
   }): Promise<{ artisan: Artisan; store: Store }> {
-    const artisanId = `artisan-${Date.now()}`;
-    const storeId = `store-${Date.now()}`;
-    const userId = `user-${Date.now()}`;
+    const artisanId = generateUUID();
+    const storeId = generateUUID();
+    const userId = generateUUID();
 
     const newArtisan: Artisan = {
       id: artisanId,
@@ -566,7 +624,7 @@ export const storeService = {
       whatsapp: payload.whatsapp.replace(/\D/g, ''),
       instagram: payload.instagram,
       address: payload.address,
-      neighborhood: payload.neighborhood,
+      neighborhood: payload.neighborhood || 'São Roque',
       latitude: city.latitude + (Math.random() - 0.5) * 0.02,
       longitude: city.longitude + (Math.random() - 0.5) * 0.02,
       openingHours: 'Segunda a Sábado, das 9h às 18h',
@@ -589,10 +647,12 @@ export const storeService = {
     runtimeArtisans.unshift(newArtisan);
     runtimeStores.unshift(newStore);
 
+    const createdProducts: Product[] = [];
+
     payload.products.forEach((p, idx) => {
       const prodSlug = `${p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now().toString().slice(-4)}-${idx}`;
       const newProd: Product = {
-        id: `prod-${Date.now()}-${idx}`,
+        id: generateUUID(),
         storeId,
         cityId: payload.cityId,
         categoryId: payload.categoryId,
@@ -622,7 +682,72 @@ export const storeService = {
         updatedAt: new Date().toISOString(),
       };
       runtimeProducts.unshift(newProd);
+      createdProducts.push(newProd);
     });
+
+    persistLocalCustomData();
+
+    // Async write to Supabase PostgreSQL in background
+    try {
+      if (SUPABASE_URL && SUPABASE_KEY) {
+        fetch(`${SUPABASE_URL}/rest/v1/artisans`, {
+          method: 'POST',
+          headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            Prefer: 'return=minimal',
+          },
+          body: JSON.stringify({
+            id: artisanId,
+            full_name: payload.fullName,
+            phone: payload.phone,
+            email: payload.email,
+            bio: payload.description,
+            avatar_url: newArtisan.avatarUrl,
+            verified: false,
+            founding_member: newArtisan.foundingMember,
+            status: 'PENDING',
+            onboarding_source: 'SELF_SERVICE',
+          }),
+        }).catch(() => {});
+
+        fetch(`${SUPABASE_URL}/rest/v1/stores`, {
+          method: 'POST',
+          headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            Prefer: 'return=minimal',
+          },
+          body: JSON.stringify({
+            id: storeId,
+            artisan_id: artisanId,
+            city_id: payload.cityId,
+            category_id: payload.categoryId,
+            name: payload.storeName,
+            slug: storeSlug,
+            artisan_name: payload.fullName,
+            bio: payload.description,
+            story: payload.story || payload.description,
+            logo_url: newStore.logoUrl,
+            cover_url: newStore.coverUrl,
+            whatsapp: payload.whatsapp.replace(/\D/g, ''),
+            instagram: payload.instagram || '',
+            address: payload.address,
+            neighborhood: payload.neighborhood || 'São Roque',
+            latitude: newStore.latitude,
+            longitude: newStore.longitude,
+            opening_hours: newStore.openingHours,
+            verified: false,
+            founding_member: newStore.foundingMember,
+            status: 'PENDING',
+            plan_type: 'FREE',
+            is_featured: false,
+          }),
+        }).catch(() => {});
+      }
+    } catch {}
 
     return { artisan: newArtisan, store: newStore };
   },
@@ -649,8 +774,8 @@ export const storeService = {
       images?: string[];
     }>;
   }): Promise<{ artisan: Artisan; store: Store; invitationToken: string; invitationUrl: string }> {
-    const artisanId = `artisan-${Date.now()}`;
-    const storeId = `store-${Date.now()}`;
+    const artisanId = generateUUID();
+    const storeId = generateUUID();
     const slugBase = payload.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     const token = `convite-${slugBase}-${Math.random().toString(36).substring(2, 8)}`;
 
@@ -717,7 +842,7 @@ export const storeService = {
       payload.products.forEach((p, idx) => {
         const prodSlug = `${p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now().toString().slice(-4)}-${idx}`;
         const newProd: Product = {
-          id: `prod-${Date.now()}-${idx}`,
+          id: generateUUID(),
           storeId,
           cityId: payload.cityId,
           categoryId: payload.categoryId,
@@ -747,6 +872,8 @@ export const storeService = {
       });
     }
 
+    persistLocalCustomData();
+
     return {
       artisan: newArtisan,
       store: newStore,
@@ -772,7 +899,7 @@ export const storeService = {
 
     artisan.invitationStatus = 'ACCEPTED';
     artisan.acceptedAt = new Date().toISOString();
-    artisan.userId = `user-${Date.now()}`;
+    artisan.userId = generateUUID();
     artisan.status = 'APPROVED';
 
     const store = runtimeStores.find((s) => s.artisanId === artisan.id || s.userId === artisan.userId);
@@ -781,6 +908,7 @@ export const storeService = {
       store.status = 'APPROVED';
     }
 
+    persistLocalCustomData();
     return true;
   },
 
@@ -816,6 +944,7 @@ export const storeService = {
         });
     }
 
+    persistLocalCustomData();
     return true;
   },
 
@@ -831,6 +960,7 @@ export const storeService = {
 
     prod.status = statusMap[action] || 'PENDING';
     prod.updatedAt = new Date().toISOString();
+    persistLocalCustomData();
     return true;
   },
 
@@ -838,6 +968,7 @@ export const storeService = {
     const store = runtimeStores.find((s) => s.id === id);
     if (!store) return false;
     store.verified = !store.verified;
+    persistLocalCustomData();
     return true;
   },
 
@@ -845,6 +976,7 @@ export const storeService = {
     const store = runtimeStores.find((s) => s.id === id);
     if (!store) return false;
     store.isFeatured = !store.isFeatured;
+    persistLocalCustomData();
     return true;
   },
 
@@ -852,6 +984,7 @@ export const storeService = {
     const prod = runtimeProducts.find((p) => p.id === id);
     if (!prod) return false;
     prod.isFeatured = !prod.isFeatured;
+    persistLocalCustomData();
     return true;
   },
 
@@ -859,6 +992,7 @@ export const storeService = {
     const store = runtimeStores.find((s) => s.id === id);
     if (!store) return false;
     store.status = status;
+    persistLocalCustomData();
     return true;
   },
 
@@ -871,6 +1005,7 @@ export const storeService = {
     if (store) {
       store.foundingMember = artisan.foundingMember;
     }
+    persistLocalCustomData();
     return true;
   },
 
@@ -1003,23 +1138,22 @@ export const storeService = {
     conversionRate: string;
     chartData: Array<{ label: string; date?: string; views: number; clicks: number }>;
   }> {
-    const store = runtimeStores.find((s) => s.id === storeId) || runtimeStores[0];
+    const store = runtimeStores.find((s) => s.id === storeId || s.slug === storeId);
     const products = runtimeProducts.filter((p) => p.storeId === (store?.id || storeId));
 
     const totalProducts = products.length;
-    const viewsCount = store?.viewsCount || 420;
-    const whatsappClicksCount = store?.whatsappClicksCount || 68;
-    const favoritesCount = products.reduce((acc, p) => acc + p.favoritesCount, 0) || 34;
+    const viewsCount = store?.viewsCount || 0;
+    const whatsappClicksCount = store?.whatsappClicksCount || 0;
+    const favoritesCount = products.reduce((acc, p) => acc + p.favoritesCount, 0);
     const conversionRate = viewsCount > 0 ? ((whatsappClicksCount / viewsCount) * 100).toFixed(1) : '0.0';
 
     const chartData = [
-      { label: '10/Ago', date: '10/Ago', views: 32, clicks: 5 },
-      { label: '11/Ago', date: '11/Ago', views: 45, clicks: 8 },
-      { label: '12/Ago', date: '12/Ago', views: 58, clicks: 12 },
-      { label: '13/Ago', date: '13/Ago', views: 72, clicks: 15 },
-      { label: '14/Ago', date: '14/Ago', views: 89, clicks: 18 },
-      { label: '15/Ago', date: '15/Ago', views: 95, clicks: 22 },
-      { label: '16/Ago', date: '16/Ago', views: 110, clicks: 28 },
+      { label: 'Seg', date: 'Seg', views: Math.round(viewsCount * 0.1), clicks: Math.round(whatsappClicksCount * 0.1) },
+      { label: 'Ter', date: 'Ter', views: Math.round(viewsCount * 0.15), clicks: Math.round(whatsappClicksCount * 0.12) },
+      { label: 'Qua', date: 'Qua', views: Math.round(viewsCount * 0.12), clicks: Math.round(whatsappClicksCount * 0.1) },
+      { label: 'Qui', date: 'Qui', views: Math.round(viewsCount * 0.18), clicks: Math.round(whatsappClicksCount * 0.2) },
+      { label: 'Sex', date: 'Sex', views: Math.round(viewsCount * 0.2), clicks: Math.round(whatsappClicksCount * 0.25) },
+      { label: 'Sáb', date: 'Sáb', views: Math.round(viewsCount * 0.25), clicks: Math.round(whatsappClicksCount * 0.33) },
     ];
 
     return {
@@ -1046,6 +1180,7 @@ export const storeService = {
       updatedAt: new Date().toISOString(),
     };
 
+    persistLocalCustomData();
     return runtimeStores[storeIndex];
   },
 
@@ -1064,7 +1199,7 @@ export const storeService = {
 
     const newProduct: Product = {
       ...payload,
-      id: `prod-${Date.now()}`,
+      id: generateUUID(),
       slug,
       status: payload.status || 'APPROVED',
       viewsCount: 0,
@@ -1075,6 +1210,7 @@ export const storeService = {
     };
 
     runtimeProducts.unshift(newProduct);
+    persistLocalCustomData();
     return newProduct;
   },
 
@@ -1088,12 +1224,14 @@ export const storeService = {
       updatedAt: new Date().toISOString(),
     };
 
+    persistLocalCustomData();
     return runtimeProducts[prodIndex];
   },
 
   async deleteProduct(id: string): Promise<boolean> {
     const beforeLength = runtimeProducts.length;
     runtimeProducts = runtimeProducts.filter((p) => p.id !== id);
+    persistLocalCustomData();
     return runtimeProducts.length < beforeLength;
   },
 
@@ -1115,6 +1253,7 @@ export const storeService = {
       date: new Date().toISOString(),
     });
 
+    persistLocalCustomData();
     return true;
   },
 
@@ -1125,6 +1264,7 @@ export const storeService = {
   async trackStoreView(storeId: string): Promise<boolean> {
     const store = runtimeStores.find((s) => s.id === storeId);
     if (store) store.viewsCount += 1;
+    persistLocalCustomData();
     return true;
   },
 
@@ -1135,6 +1275,7 @@ export const storeService = {
   async trackProductView(productId: string): Promise<boolean> {
     const prod = runtimeProducts.find((p) => p.id === productId);
     if (prod) prod.viewsCount += 1;
+    persistLocalCustomData();
     return true;
   },
 

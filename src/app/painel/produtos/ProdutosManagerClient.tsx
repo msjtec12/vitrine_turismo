@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Product, Category, City } from '@/types';
 import { storeService } from '@/lib/data/store-service';
+import { useAuth } from '@/lib/auth-context';
 import ProductFormModal from '@/components/artisan/ProductFormModal';
 
 interface ProdutosManagerClientProps {
@@ -31,9 +32,27 @@ export default function ProdutosManagerClient({
   cities,
   storeId,
 }: ProdutosManagerClientProps) {
+  const { activeStoreId, user } = useAuth();
+  const [currentStoreId, setCurrentStoreId] = useState(storeId);
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  React.useEffect(() => {
+    async function loadProds() {
+      let targetId = activeStoreId;
+      if (!targetId && user?.email) {
+        const s = await storeService.getStoreByEmail(user.email);
+        if (s) targetId = s.id;
+      }
+      if (targetId) {
+        setCurrentStoreId(targetId);
+        const prods = await storeService.getProductsByStoreId(targetId);
+        setProducts(prods);
+      }
+    }
+    loadProds();
+  }, [activeStoreId, user]);
 
   const handleOpenCreate = () => {
     setEditingProduct(null);

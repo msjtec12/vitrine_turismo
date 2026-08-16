@@ -11,8 +11,9 @@ interface AuthContextType {
   isArtisan: boolean;
   isAdmin: boolean;
   activeStoreId: string;
+  setActiveStoreId: (id: string) => void;
   loginWithCredentials: (email: string, password: string) => Promise<{ user: UserProfile; role: UserRole }>;
-  loginWithEmail: (email: string, role?: UserRole) => void;
+  loginWithEmail: (email: string, role?: UserRole, storeId?: string, fullName?: string) => void;
   logout: () => Promise<void>;
 }
 
@@ -20,10 +21,17 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [activeStoreId, setActiveStoreId] = useState<string>('11111111-2222-3333-4444-111111111111');
+  const [activeStoreId, setActiveStoreIdState] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
   const supabase = createClient();
+
+  const setActiveStoreId = (id: string) => {
+    setActiveStoreIdState(id);
+    try {
+      localStorage.setItem('descubra_artes_store_id', id);
+    } catch {}
+  };
 
   useEffect(() => {
     // 1. Check local session storage
@@ -34,7 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(JSON.parse(savedUser));
       }
       if (savedStore) {
-        setActiveStoreId(savedStore);
+        setActiveStoreIdState(savedStore);
       }
     } catch {}
 
@@ -117,10 +125,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // Direct credentials verification for seeded master accounts
+    // Direct credentials verification
     const cleanEmail = email.toLowerCase().trim();
     let role: UserRole = 'ARTISAN';
-    let fullName = 'Mestre Artesão';
+    let fullName = email.split('@')[0];
 
     if (cleanEmail === 'admin@descubraartes.com.br' || cleanEmail.includes('admin')) {
       role = 'ADMIN';
@@ -128,9 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } else if (cleanEmail.includes('claudio')) {
       role = 'ARTISAN';
       fullName = 'Mestre Cláudio Fontana';
-    } else {
-      role = 'ARTISAN';
-      fullName = email.split('@')[0];
+      setActiveStoreId('11111111-2222-3333-4444-111111111111');
     }
 
     const profile: UserProfile = {
@@ -149,17 +155,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { user: profile, role };
   };
 
-  const loginWithEmail = (email: string, role: UserRole = 'ARTISAN') => {
+  const loginWithEmail = (email: string, role: UserRole = 'ARTISAN', storeId?: string, fullName?: string) => {
     const profile: UserProfile = {
       id: `user-${Date.now()}`,
       email,
-      fullName: email.split('@')[0],
+      fullName: fullName || email.split('@')[0],
       role,
       createdAt: new Date().toISOString(),
     };
     setUser(profile);
     try {
       localStorage.setItem('descubra_artes_user', JSON.stringify(profile));
+      if (storeId) {
+        setActiveStoreId(storeId);
+      }
     } catch {}
   };
 
@@ -170,6 +179,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch {}
     }
     setUser(null);
+    setActiveStoreIdState('');
     try {
       localStorage.removeItem('descubra_artes_user');
       localStorage.removeItem('descubra_artes_store_id');
@@ -187,6 +197,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isArtisan: currentRole === 'ARTISAN',
         isAdmin: currentRole === 'ADMIN',
         activeStoreId,
+        setActiveStoreId,
         loginWithCredentials,
         loginWithEmail,
         logout,

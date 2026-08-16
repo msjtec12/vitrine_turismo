@@ -1,34 +1,63 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
-  Store,
+  Store as StoreIcon,
   Package,
   Flame,
   Sparkles,
   BarChart3,
   Settings,
   ExternalLink,
-  ShieldAlert,
+  Clock,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
+import { storeService } from '@/lib/data/store-service';
+import { Store } from '@/types';
 
 export default function PainelLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, activeStoreId } = useAuth();
+  const [store, setStore] = useState<Store | null>(null);
+
+  useEffect(() => {
+    async function loadStore() {
+      if (activeStoreId) {
+        const s = await storeService.getStoreById(activeStoreId);
+        if (s) {
+          setStore(s);
+          return;
+        }
+      }
+      if (user?.email) {
+        const s = await storeService.getStoreByEmail(user.email);
+        if (s) {
+          setStore(s);
+          return;
+        }
+      }
+      const all = await storeService.getAllStoresForAdmin();
+      setStore(all[0] || null);
+    }
+
+    loadStore();
+  }, [activeStoreId, user]);
 
   const navItems = [
     { label: 'Dashboard', href: '/painel', icon: <LayoutDashboard size={18} /> },
-    { label: 'Minha Loja', href: '/painel/loja', icon: <Store size={18} /> },
+    { label: 'Minha Loja', href: '/painel/loja', icon: <StoreIcon size={18} /> },
     { label: 'Produtos', href: '/painel/produtos', icon: <Package size={18} /> },
     { label: 'Promoções', href: '/painel/promocoes', icon: <Flame size={18} /> },
     { label: 'Destaques & Planos', href: '/painel/destaques', icon: <Sparkles size={18} /> },
     { label: 'Estatísticas', href: '/painel/estatisticas', icon: <BarChart3 size={18} /> },
     { label: 'Configurações', href: '/painel/configuracoes', icon: <Settings size={18} /> },
   ];
+
+  const storeName = store?.name || 'Seu Ateliê';
+  const isApproved = store?.status === 'APPROVED';
 
   return (
     <div className="min-h-screen bg-[#FAF7F2]">
@@ -40,20 +69,35 @@ export default function PainelLayout({ children }: { children: React.ReactNode }
               Painel do Artesão
             </span>
             <span className="text-white/40">•</span>
-            <span className="text-xs text-white/80 hidden sm:inline">
-              Cerâmica da Terra São Roque
+            <span className="text-xs text-white/90 font-medium truncate max-w-[200px] sm:max-w-xs">
+              {storeName}
             </span>
+            {store?.status === 'PENDING' && (
+              <span className="text-[10px] bg-[#E9C46A] text-[#1B4332] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                <Clock size={10} />
+                <span>Em Análise</span>
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-3 text-xs">
-            <Link
-              href="/loja/ceramica-da-terra-sao-roque"
-              target="_blank"
-              className="inline-flex items-center gap-1 bg-white/10 hover:bg-white/20 text-white px-3 py-1 rounded-lg transition-colors font-medium"
-            >
-              <span>Ver Minha Loja Pública</span>
-              <ExternalLink size={12} />
-            </Link>
+            {isApproved && store?.slug ? (
+              <Link
+                href={`/loja/${store.slug}`}
+                target="_blank"
+                className="inline-flex items-center gap-1 bg-white/10 hover:bg-white/20 text-white px-3 py-1 rounded-lg transition-colors font-medium cursor-pointer"
+              >
+                <span>Ver Minha Loja Pública</span>
+                <ExternalLink size={12} />
+              </Link>
+            ) : (
+              <Link
+                href="/painel/loja"
+                className="inline-flex items-center gap-1 bg-white/10 hover:bg-white/20 text-white/90 px-3 py-1 rounded-lg transition-colors text-[11px]"
+              >
+                <span>Editar Dados do Ateliê</span>
+              </Link>
+            )}
           </div>
         </div>
       </div>

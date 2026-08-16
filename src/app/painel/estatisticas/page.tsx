@@ -1,11 +1,50 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import { BarChart3, TrendingUp, Sparkles, MessageCircle, Eye, Heart } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
 import { storeService } from '@/lib/data/store-service';
 import ArtisanStatsCard from '@/components/artisan/ArtisanStatsCard';
 import ArtisanViewsChart from '@/components/artisan/ArtisanViewsChart';
 
-export default async function PainelEstatisticasPage() {
-  const stats = await storeService.getArtisanStats('store-ceramica-da-terra');
+export default function PainelEstatisticasPage() {
+  const { activeStoreId, user } = useAuth();
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadStats() {
+      setLoading(true);
+      let targetStoreId = activeStoreId;
+      if (!targetStoreId && user?.email) {
+        const s = await storeService.getStoreByEmail(user.email);
+        if (s) targetStoreId = s.id;
+      }
+      if (!targetStoreId) {
+        const all = await storeService.getAllStoresForAdmin();
+        targetStoreId = all[0]?.id || '';
+      }
+      if (targetStoreId) {
+        const res = await storeService.getArtisanStats(targetStoreId);
+        setStats(res);
+      }
+      setLoading(false);
+    }
+    loadStats();
+  }, [activeStoreId, user]);
+
+  if (loading || !stats) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <div className="h-28 bg-white rounded-3xl border border-[#EDE5D8]" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-28 bg-white rounded-2xl border border-[#EDE5D8]" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

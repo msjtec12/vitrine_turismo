@@ -5,10 +5,12 @@ import Link from 'next/link';
 import { Store as StoreIcon, Check, ExternalLink, Sparkles, MapPin } from 'lucide-react';
 import { Store } from '@/types';
 import { storeService } from '@/lib/data/store-service';
+import { useAuth } from '@/lib/auth-context';
 import ImageUpload from '@/components/ui/ImageUpload';
 import CepAddressForm from '@/components/ui/CepAddressForm';
 
 export default function LojaEditorClient({ initialStore }: { initialStore: Store | null }) {
+  const { activeStoreId, user } = useAuth();
   const [store, setStore] = useState<Store | null>(initialStore);
   const [name, setName] = useState(store?.name || '');
   const [artisanName, setArtisanName] = useState(store?.artisanName || '');
@@ -30,6 +32,37 @@ export default function LojaEditorClient({ initialStore }: { initialStore: Store
 
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  React.useEffect(() => {
+    async function refreshStore() {
+      let s: Store | null = null;
+      if (activeStoreId) {
+        s = await storeService.getStoreById(activeStoreId);
+      }
+      if (!s && user?.email) {
+        s = await storeService.getStoreByEmail(user.email);
+      }
+      if (!s && initialStore) {
+        s = initialStore;
+      }
+      if (s) {
+        setStore(s);
+        setName(s.name || '');
+        setArtisanName(s.artisanName || '');
+        setBio(s.bio || '');
+        setStory(s.story || '');
+        setProcessDescription(s.processDescription || '');
+        setWhatsapp(s.whatsapp || '');
+        setInstagram(s.instagram || '');
+        setOpeningHours(s.openingHours || '');
+        setCoverUrl(s.coverUrl || '');
+        setLogoUrl(s.logoUrl || '');
+        setStreet(s.address || '');
+        setNeighborhood(s.neighborhood || 'São Roque');
+      }
+    }
+    refreshStore();
+  }, [activeStoreId, user, initialStore]);
 
   const formatFullAddress = () => {
     if (!street) return store?.address || '';
