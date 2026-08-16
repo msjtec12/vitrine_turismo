@@ -2,29 +2,34 @@
 
 @layer base {
   :root {
-    --color-forest: #1B4332;
-    --color-forest-dark: #122F23;
-    --color-forest-light: #2D6A4F;
-    --color-forest-soft: #D8F3DC;
+    /* Brand Navy Palette (from Logo Text & Map Pin) */
+    --color-forest: #0B2545;
+    --color-forest-dark: #06182D;
+    --color-forest-light: #133C55;
+    --color-forest-soft: #E8F1F5;
 
-    --color-terracotta: #C85A32;
-    --color-terracotta-dark: #A4421F;
-    --color-terracotta-light: #E07A5F;
+    /* Brand Gold & Terracotta (from Logo Sun, Clay Vase & Crafts) */
+    --color-terracotta: #E76F51;
+    --color-terracotta-dark: #C85A32;
+    --color-terracotta-light: #F4A261;
     --color-terracotta-soft: #FDE8E1;
 
-    --color-sand-50: #FAF7F2;
-    --color-sand-100: #F4EFE6;
-    --color-sand-200: #EDE5D8;
-    --color-sand-300: #D8CCBA;
+    /* Light Sand & Backgrounds */
+    --color-sand-50: #FDFBF7;
+    --color-sand-100: #F7F3EA;
+    --color-sand-200: #EAE3D6;
+    --color-sand-300: #DDD3C1;
 
-    --color-wood: #4A3525;
-    --color-wood-dark: #2C2623;
+    --color-wood: #2C2623;
+    --color-wood-dark: #1A1513;
     --color-clay: #7F4F24;
 
-    --color-honey: #D4A373;
-    --color-honey-light: #E9C46A;
+    /* Brand Sun Gold */
+    --color-honey: #E9A825;
+    --color-honey-light: #F39C12;
     --color-honey-soft: #FEF9EF;
 
+    /* WhatsApp Verified Green */
     --color-whatsapp: #25D366;
     --color-whatsapp-dark: #1EBE5B;
   }
@@ -73,25 +78,25 @@
 
 /* Glassmorphism & Shadow details */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(237, 229, 216, 0.7);
+  border: 1px solid rgba(234, 227, 214, 0.8);
 }
 
 .glass-panel-dark {
-  background: rgba(27, 67, 50, 0.92);
+  background: rgba(11, 37, 69, 0.94);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .shadow-artisan {
-  box-shadow: 0 4px 20px -2px rgba(74, 53, 37, 0.08), 0 2px 6px -1px rgba(74, 53, 37, 0.04);
+  box-shadow: 0 4px 20px -2px rgba(11, 37, 69, 0.07), 0 2px 6px -1px rgba(11, 37, 69, 0.04);
 }
 
 .shadow-artisan-hover {
-  box-shadow: 0 12px 30px -4px rgba(74, 53, 37, 0.14), 0 4px 12px -2px rgba(74, 53, 37, 0.06);
+  box-shadow: 0 12px 30px -4px rgba(11, 37, 69, 0.12), 0 4px 12px -2px rgba(11, 37, 69, 0.05);
 }
 
 /* Hide scrollbar for clean category sliders */
@@ -101,14 +106,4 @@
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
-}
-
-/* Animations */
-@keyframes pulseSubtle {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.92; transform: scale(1.02); }
-}
-
-.animate-pulse-subtle {
-  animation: pulseSubtle 3s infinite ease-in-out;
 }

@@ -18,87 +18,66 @@ export default function Logo({
 }: LogoProps) {
   const isLight = theme === 'light';
 
+  const heightClasses = {
+    sm: 'h-11',
+    md: 'h-14 sm:h-16',
+    lg: 'h-18 sm:h-20',
+    xl: 'h-24 sm:h-28',
+  };
+
   const iconSizes = {
-    sm: 'w-8 h-8',
-    md: 'w-10 h-10',
-    lg: 'w-12 h-12',
-    xl: 'w-16 h-16',
+    sm: 'w-11 h-11',
+    md: 'w-14 h-14 sm:w-16 sm:h-16',
+    lg: 'w-20 h-20',
+    xl: 'w-28 h-28',
   };
-
-  const titleSizes = {
-    sm: 'text-base',
-    md: 'text-lg sm:text-xl',
-    lg: 'text-xl sm:text-2xl',
-    xl: 'text-2xl sm:text-3xl',
-  };
-
-  const subtitleSizes = {
-    sm: 'text-[9px]',
-    md: 'text-[10px]',
-    lg: 'text-xs',
-    xl: 'text-sm',
-  };
-
-  const LogoIcon = (
-    <div
-      className={`relative ${iconSizes[size]} rounded-2xl overflow-hidden shadow-xs shrink-0 flex items-center justify-center transition-transform group-hover:scale-105 duration-300 ${
-        isLight ? 'bg-white/10 ring-1 ring-white/20' : 'bg-[#1B4332]'
-      }`}
-    >
-      <img
-        src="/images/logo.png"
-        alt="Descubra Artes Ícone"
-        className="w-full h-full object-cover rounded-2xl"
-      />
-    </div>
-  );
-
-  const LogoText = (
-    <div className="flex flex-col">
-      <span
-        className={`font-serif font-extrabold tracking-tight leading-none transition-colors ${
-          titleSizes[size]
-        } ${isLight ? 'text-white' : 'text-[#1B4332] group-hover:text-[#C85A32]'}`}
-      >
-        DESCUBRA ARTES
-      </span>
-      {variant === 'full' && (
-        <span
-          className={`font-sans font-semibold tracking-wider uppercase mt-1 ${
-            subtitleSizes[size]
-          } ${isLight ? 'text-[#E9C46A]' : 'text-[#7F4F24]'}`}
-        >
-          Turismo • Cultura • Artesanato
-        </span>
-      )}
-    </div>
-  );
 
   if (variant === 'icon-only') {
+    const iconContent = (
+      <div
+        className={`relative ${iconSizes[size]} p-2 rounded-2xl bg-white border border-[#EAE3D6] shadow-xs shrink-0 flex items-center justify-center transition-all duration-300 group-hover:scale-105 group-hover:shadow-md ${
+          isLight ? 'bg-white ring-2 ring-white/40' : 'bg-white'
+        } ${className}`}
+      >
+        <img
+          src="/images/logo.png"
+          alt="Descubra Artes Ícone"
+          className="w-full h-full object-contain"
+        />
+      </div>
+    );
+
     if (href) {
       return (
-        <Link href={href} className={`inline-flex items-center group ${className}`}>
-          {LogoIcon}
+        <Link href={href} className="inline-flex items-center group">
+          {iconContent}
         </Link>
       );
     }
-    return LogoIcon;
+    return iconContent;
   }
 
-  const content = (
-    <div className={`inline-flex items-center gap-3 group ${className}`}>
-      {LogoIcon}
-      {LogoText}
+  const fullContent = (
+    <div
+      className={`relative ${heightClasses[size]} p-1.5 px-3 rounded-2xl bg-white border border-[#EAE3D6] shadow-xs shrink-0 flex items-center justify-center transition-all duration-300 group-hover:scale-103 group-hover:shadow-md ${
+        isLight ? 'bg-white ring-2 ring-white/40' : 'bg-white'
+      } ${className}`}
+    >
+      <img
+        src="/images/logo.png"
+        alt="Descubra Artes • Turismo, Cultura e Artesanato"
+        className="h-full w-auto object-contain max-h-full"
+      />
     </div>
   );
 
   if (href) {
     return (
       <Link href={href} className="inline-flex items-center group">
-        {content}
+        {fullContent}
       </Link>
     );
   }
 
-  return content;
+  return fullContent;
 }
