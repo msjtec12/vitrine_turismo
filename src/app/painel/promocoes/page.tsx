@@ -1,19 +1,21 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Flame, Plus, Sparkles, CheckCircle2, Package } from 'lucide-react';
+import { Flame, Plus, Sparkles, CheckCircle2, Package, Lock, ArrowRight, MessageCircle } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { storeService } from '@/lib/data/store-service';
-import { Product } from '@/types';
+import { Product, Store } from '@/types';
+import { getStoreEffectiveEntitlements } from '@/lib/plans/entitlements';
 import Link from 'next/link';
 
 export default function PainelPromocoesPage() {
   const { activeStoreId, user } = useAuth();
+  const [store, setStore] = useState<Store | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadProducts() {
+    async function loadData() {
       setLoading(true);
       let targetStoreId = activeStoreId;
       if (!targetStoreId && user?.email) {
@@ -25,15 +27,94 @@ export default function PainelPromocoesPage() {
         targetStoreId = all[0]?.id || '';
       }
       if (targetStoreId) {
-        const prods = await storeService.getProductsByStoreId(targetStoreId);
+        const [loadedStore, prods] = await Promise.all([
+          storeService.getStoreById(targetStoreId),
+          storeService.getProductsByStoreId(targetStoreId),
+        ]);
+        if (loadedStore) setStore(loadedStore);
         setProducts(prods);
       }
       setLoading(false);
     }
-    loadProducts();
+    loadData();
   }, [activeStoreId, user]);
 
+  const entitlements = getStoreEffectiveEntitlements(store, products.length);
   const promoProducts = products.filter((p: Product) => p.isPromo);
+
+  const whatsappUpgradeUrl = `https://wa.me/5516991551200?text=${encodeURIComponent(
+    `Olá! Gostaria de fazer o upgrade para o Plano Profissional (R$ 49,90/mês) no Descubra Artes para liberar as Ofertas Locais no ateliê "${store?.name || 'meu ateliê'}".`
+  )}`;
+
+  if (!loading && !entitlements.canCreateOffers) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-white p-6 rounded-3xl border border-[#EDE5D8] shadow-xs">
+          <h1 className="font-serif font-bold text-2xl text-[#1B4332] flex items-center gap-2">
+            <Flame size={22} className="text-[#C85A32]" />
+            <span>Gestão de Promoções & Ofertas Locais</span>
+          </h1>
+          <p className="text-xs text-[#7F4F24] mt-1">
+            Divulgação destacada de descontos para turistas em São Roque e região
+          </p>
+        </div>
+
+        {/* Locked Feature Educational Banner */}
+        <div className="bg-white p-8 sm:p-12 rounded-3xl border border-[#EDE5D8] shadow-xs text-center space-y-6 max-w-2xl mx-auto">
+          <div className="w-16 h-16 rounded-3xl bg-[#FEF9EF] text-[#C85A32] flex items-center justify-center mx-auto border border-[#EDE5D8]">
+            <Lock size={32} />
+          </div>
+
+          <div className="space-y-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#C85A32] bg-[#FDE8E1] px-3 py-1 rounded-full">
+              Recurso Exclusivo
+            </span>
+            <h2 className="font-serif font-bold text-2xl text-[#1B4332]">
+              Ofertas Locais é um recurso do Plano Profissional
+            </h2>
+            <p className="text-xs text-[#7F4F24] leading-relaxed max-w-lg mx-auto">
+              Com o <strong>Plano Profissional (R$ 49,90/mês)</strong>, você publica descontos sazonais na vitrine regional, ganha exposição prioritária nas buscas e atrai turistas que procuram lembranças e presentes artesanais.
+            </p>
+          </div>
+
+          <div className="p-5 rounded-2xl bg-[#FAF7F2] border border-[#EDE5D8] text-left space-y-3 text-xs max-w-md mx-auto">
+            <span className="font-bold text-[#1B4332] block">Vantagens do Plano Profissional:</span>
+            <ul className="space-y-2 text-[11px] text-[#7F4F24]">
+              <li className="flex items-center gap-2">
+                <CheckCircle2 size={14} className="text-[#2D6A4F] shrink-0" />
+                <span>Publicação ilimitada na área de <strong>Ofertas Locais</strong></span>
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 size={14} className="text-[#2D6A4F] shrink-0" />
+                <span><strong>Catálogo ilimitado</strong> de peças e produtos</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 size={14} className="text-[#2D6A4F] shrink-0" />
+                <span><strong>Selo Oficial</strong> de Produtor Verificado</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 size={14} className="text-[#2D6A4F] shrink-0" />
+                <span>Estatísticas avançadas de cliques e visitas</span>
+              </li>
+            </ul>
+          </div>
+
+          <div className="pt-2">
+            <a
+              href={whatsappUpgradeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-8 py-3.5 bg-[#1B4332] hover:bg-[#2D6A4F] text-white font-bold text-xs rounded-2xl shadow-md transition-all"
+            >
+              <MessageCircle size={16} className="text-[#E9C46A]" />
+              <span>Fazer Upgrade via WhatsApp (R$ 49,90/mês)</span>
+              <ArrowRight size={14} />
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -1,14 +1,17 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { BarChart3, TrendingUp, Sparkles, MessageCircle, Eye, Heart } from 'lucide-react';
+import { BarChart3, TrendingUp, Sparkles, MessageCircle, Eye, Heart, Lock, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { storeService } from '@/lib/data/store-service';
+import { Store } from '@/types';
+import { getStoreEffectiveEntitlements } from '@/lib/plans/entitlements';
 import ArtisanStatsCard from '@/components/artisan/ArtisanStatsCard';
 import ArtisanViewsChart from '@/components/artisan/ArtisanViewsChart';
 
 export default function PainelEstatisticasPage() {
   const { activeStoreId, user } = useAuth();
+  const [store, setStore] = useState<Store | null>(null);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -25,13 +28,23 @@ export default function PainelEstatisticasPage() {
         targetStoreId = all[0]?.id || '';
       }
       if (targetStoreId) {
-        const res = await storeService.getArtisanStats(targetStoreId);
+        const [loadedStore, res] = await Promise.all([
+          storeService.getStoreById(targetStoreId),
+          storeService.getArtisanStats(targetStoreId),
+        ]);
+        if (loadedStore) setStore(loadedStore);
         setStats(res);
       }
       setLoading(false);
     }
     loadStats();
   }, [activeStoreId, user]);
+
+  const entitlements = getStoreEffectiveEntitlements(store);
+
+  const whatsappUpgradeUrl = `https://wa.me/5516991551200?text=${encodeURIComponent(
+    `Olá! Gostaria de fazer o upgrade para o Plano Profissional (R$ 49,90/mês) no Descubra Artes para liberar as estatísticas avançadas da loja "${store?.name || 'meu ateliê'}".`
+  )}`;
 
   if (loading || !stats) {
     return (
@@ -60,7 +73,37 @@ export default function PainelEstatisticasPage() {
 
       <ArtisanStatsCard stats={stats} />
 
-      <ArtisanViewsChart initialData={stats.chartData} />
+      {entitlements.canAdvancedStats ? (
+        <ArtisanViewsChart initialData={stats.chartData} />
+      ) : (
+        /* Locked Advanced Analytics Teaser for Free Tier */
+        <div className="bg-white p-8 rounded-3xl border border-[#EDE5D8] shadow-xs text-center space-y-4 relative overflow-hidden">
+          <div className="filter blur-xs select-none opacity-40 pointer-events-none">
+            <ArtisanViewsChart initialData={stats.chartData} />
+          </div>
+
+          <div className="absolute inset-0 bg-white/80 backdrop-blur-2xs flex flex-col items-center justify-center p-6 space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-[#FEF9EF] text-[#C85A32] flex items-center justify-center border border-[#EDE5D8]">
+              <Lock size={22} />
+            </div>
+            <h3 className="font-serif font-bold text-lg text-[#1B4332]">
+              Gráficos Detalhados & Origem de Tráfego
+            </h3>
+            <p className="text-xs text-[#7F4F24] max-w-md">
+              Desbloqueie relatórios de conversão diária por dia da semana e comportamento de turistas no <strong>Plano Profissional (R$ 49,90/mês)</strong>.
+            </p>
+            <a
+              href={whatsappUpgradeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-6 py-2.5 rounded-xl bg-[#1B4332] hover:bg-[#2D6A4F] text-white font-bold text-xs shadow-md transition-all inline-flex items-center gap-2"
+            >
+              <span>Desbloquear no Plano Profissional</span>
+              <ArrowRight size={14} />
+            </a>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white p-6 rounded-3xl border border-[#EDE5D8] shadow-xs space-y-3">
         <h3 className="font-serif font-bold text-lg text-[#1B4332]">

@@ -147,7 +147,47 @@ export default function PainelLayout({ children }: { children: React.ReactNode }
         </aside>
 
         {/* Main Artisan Page Workspace */}
-        <main className="flex-1 min-w-0">{children}</main>
+        <main className="flex-1 min-w-0 space-y-6">
+          {store?.accountStatus === 'SUSPENDED' && (
+            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-900 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+              <div>
+                <span className="font-bold block">⚠️ Conta Suspensa Temporariamente</span>
+                <p className="text-[11px] text-amber-800 mt-0.5">
+                  Sua conta está com ações de cadastro e edição restritas pela curadoria. Entre em contato para regularizar.
+                </p>
+              </div>
+              <a
+                href="https://wa.me/5516991551200"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 rounded-xl bg-amber-800 text-white font-bold text-xs shrink-0 text-center"
+              >
+                Falar no WhatsApp
+              </a>
+            </div>
+          )}
+
+          {store?.accountStatus === 'BLOCKED' && (
+            <div className="p-4 rounded-2xl bg-red-50 border border-red-300 text-red-900 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+              <div>
+                <span className="font-bold block">🚫 Conta Bloqueada</span>
+                <p className="text-[11px] text-red-800 mt-0.5">
+                  O acesso à sua vitrine está bloqueado pelo administrador Master. Fale com o suporte para mais informações.
+                </p>
+              </div>
+              <a
+                href="https://wa.me/5516991551200"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 rounded-xl bg-red-800 text-white font-bold text-xs shrink-0 text-center"
+              >
+                Falar no WhatsApp
+              </a>
+            </div>
+          )}
+
+          {children}
+        </main>
       </div>
     </div>
   );

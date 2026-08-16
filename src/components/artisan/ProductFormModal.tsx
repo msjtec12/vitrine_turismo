@@ -105,8 +105,8 @@ export default function ProductFormModal({
         });
         onSuccess(created);
       }
-    } catch (err) {
-      alert('Erro ao salvar o produto.');
+    } catch (err: any) {
+      alert(err?.message || 'Erro ao salvar o produto.');
     } finally {
       setIsSaving(false);
     }

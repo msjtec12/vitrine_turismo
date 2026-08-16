@@ -143,6 +143,57 @@ export default async function AdminPage() {
         ))}
       </div>
 
+      {/* Planos & Contas Master Overview */}
+      <div className="bg-white p-6 rounded-3xl border border-[#EDE5D8] shadow-xs space-y-4">
+        <div className="flex items-center justify-between border-b border-[#EDE5D8] pb-3">
+          <h3 className="font-serif font-bold text-base text-[#1B4332] flex items-center gap-2">
+            <Sparkles size={16} className="text-[#C85A32]" />
+            <span>Gestão de Planos & Permissões Master</span>
+          </h3>
+          <Link
+            href="/admin/artesaos"
+            className="text-xs font-bold text-[#C85A32] hover:underline flex items-center gap-1"
+          >
+            <span>Gerenciar Todos</span>
+            <ArrowRight size={13} />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="p-4 rounded-2xl bg-[#FAF7F2] border border-[#EDE5D8]">
+            <span className="text-xs font-bold text-[#7F4F24] block">Plano Gratuito (Free)</span>
+            <div className="text-2xl font-serif font-bold text-[#1B4332] mt-1">
+              {metrics.freeStores}
+            </div>
+            <span className="text-[10px] text-[#7F4F24]">Até 5 produtos por ateliê</span>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-[#D8F3DC]/40 border border-[#2D6A4F]/20">
+            <span className="text-xs font-bold text-[#2D6A4F] block">Plano Profissional</span>
+            <div className="text-2xl font-serif font-bold text-[#1B4332] mt-1">
+              {metrics.proStores}
+            </div>
+            <span className="text-[10px] text-[#2D6A4F]">R$ 49,90/mês • Ilimitado</span>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-[#FAF7F2] border border-[#EDE5D8]">
+            <span className="text-xs font-bold text-[#7F4F24] block">Contas Suspensas / Bloq.</span>
+            <div className="text-2xl font-serif font-bold text-amber-800 mt-1">
+              {metrics.suspendedAccounts + metrics.blockedAccounts}
+            </div>
+            <span className="text-[10px] text-[#7F4F24]">{metrics.activeAccounts} contas ativas</span>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-[#FEF9EF] border border-[#EDE5D8]">
+            <span className="text-xs font-bold text-[#7F4F24] block">Verificados & Destaques</span>
+            <div className="text-2xl font-serif font-bold text-[#C85A32] mt-1">
+              {metrics.verifiedStores} / {metrics.featuredStores}
+            </div>
+            <span className="text-[10px] text-[#7F4F24]">Selo verificado / Destaque</span>
+          </div>
+        </div>
+      </div>
+
       {/* Origins Breakdown & Cities */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Onboarding Source Metrics */}

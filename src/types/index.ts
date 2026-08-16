@@ -1,6 +1,8 @@
-export type UserRole = 'ADMIN' | 'ARTISAN' | 'CUSTOMER';
+export type UserRole = 'ADMIN' | 'ARTISAN' | 'CUSTOMER' | 'MASTER';
 
 export type ArtisanStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
+
+export type AccountStatus = 'ACTIVE' | 'SUSPENDED' | 'PENDING' | 'BLOCKED';
 
 export type StoreStatus = 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
 
@@ -10,9 +12,45 @@ export type OnboardingSource = 'SELF_SERVICE' | 'ADMIN_ASSISTED' | 'PARTNER';
 
 export type InvitationStatus = 'NOT_SENT' | 'SENT' | 'ACCEPTED' | 'EXPIRED';
 
-export type PlanType = 'FREE' | 'PRO' | 'PREMIUM';
+export type PlanType = 'FREE' | 'PROFESSIONAL' | 'PRO' | 'PREMIUM';
+
+export type PlanStatus = 'ACTIVE' | 'EXPIRED' | 'CANCELLED' | 'MANUAL';
+
+export type BillingSource = 'MANUAL' | 'MERCADOPAGO' | 'STRIPE' | 'COURTESY';
 
 export type FeaturedType = 'PRODUCT_FEATURED' | 'STORE_FEATURED' | 'CITY_FEATURED';
+
+export interface PlanEntitlements {
+  maxProducts: number | null; // null = unlimited
+  maxPhotosPerProduct: number;
+  canCreateOffers: boolean;
+  canFeatured: boolean;
+  canVerifiedBadge: boolean;
+  canAdvancedStats: boolean;
+  canPriorityExposure: boolean;
+}
+
+export interface ManualOverrides {
+  maxProducts?: number | null;
+  maxPhotosPerProduct?: number;
+  canCreateOffers?: boolean;
+  canFeatured?: boolean;
+  canVerifiedBadge?: boolean;
+  canAdvancedStats?: boolean;
+  canPriorityExposure?: boolean;
+}
+
+export interface PlanHistoryEntry {
+  id: string;
+  action: string;
+  previousPlan?: PlanType;
+  newPlan?: PlanType;
+  previousStatus?: AccountStatus | PlanStatus;
+  newStatus?: AccountStatus | PlanStatus;
+  performedBy: string;
+  notes?: string;
+  createdAt: string;
+}
 
 export interface UserProfile {
   id: string;
@@ -108,8 +146,15 @@ export interface Store {
   verified: boolean;
   foundingMember?: boolean;
   status: StoreStatus;
+  accountStatus?: AccountStatus;
   adminNotes?: string;
   planType: PlanType;
+  planStatus?: PlanStatus;
+  planStartedAt?: string;
+  planExpiresAt?: string | null;
+  billingSource?: BillingSource;
+  manualOverrides?: ManualOverrides;
+  planHistory?: PlanHistoryEntry[];
   isFeatured: boolean;
   featuredUntil?: string;
   rating: number;

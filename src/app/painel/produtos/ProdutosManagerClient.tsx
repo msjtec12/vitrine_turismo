@@ -13,10 +13,15 @@ import {
   CheckCircle2,
   Eye,
   MessageCircle,
+  AlertTriangle,
+  Lock,
+  ArrowRight,
+  X,
 } from 'lucide-react';
-import { Product, Category, City } from '@/types';
+import { Product, Category, City, Store } from '@/types';
 import { storeService } from '@/lib/data/store-service';
 import { useAuth } from '@/lib/auth-context';
+import { getStoreEffectiveEntitlements, getPlanDisplayName } from '@/lib/plans/entitlements';
 import ProductFormModal from '@/components/artisan/ProductFormModal';
 
 interface ProdutosManagerClientProps {
@@ -34,13 +39,15 @@ export default function ProdutosManagerClient({
 }: ProdutosManagerClientProps) {
   const { activeStoreId, user } = useAuth();
   const [currentStoreId, setCurrentStoreId] = useState(storeId || activeStoreId);
+  const [store, setStore] = useState<Store | null>(null);
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadProds() {
+    async function loadData() {
       setLoading(true);
       let targetId = activeStoreId;
       if (!targetId && user?.email) {
@@ -49,17 +56,27 @@ export default function ProdutosManagerClient({
       }
       if (targetId) {
         setCurrentStoreId(targetId);
-        const prods = await storeService.getProductsByStoreId(targetId);
+        const [loadedStore, prods] = await Promise.all([
+          storeService.getStoreById(targetId),
+          storeService.getProductsByStoreId(targetId),
+        ]);
+        if (loadedStore) setStore(loadedStore);
         setProducts(prods);
       } else {
         setProducts([]);
       }
       setLoading(false);
     }
-    loadProds();
+    loadData();
   }, [activeStoreId, user]);
 
+  const entitlements = getStoreEffectiveEntitlements(store, products.length);
+
   const handleOpenCreate = () => {
+    if (!entitlements.canAddProduct) {
+      setShowUpgradeModal(true);
+      return;
+    }
     setEditingProduct(null);
     setIsModalOpen(true);
   };
@@ -89,6 +106,10 @@ export default function ProdutosManagerClient({
   };
 
   const handleTogglePromo = async (prod: Product) => {
+    if (!entitlements.canCreateOffers) {
+      alert('As Ofertas Locais são exclusivas do Plano Profissional (R$ 49,90/mês). Faça upgrade para ativar.');
+      return;
+    }
     const nextPromo = !prod.isPromo;
     const updated = await storeService.updateProduct(prod.id, {
       isPromo: nextPromo,
@@ -98,6 +119,10 @@ export default function ProdutosManagerClient({
       setProducts((prev) => prev.map((p) => (p.id === prod.id ? updated : p)));
     }
   };
+
+  const whatsappUpgradeUrl = `https://wa.me/5516991551200?text=${encodeURIComponent(
+    `Olá! Gostaria de fazer o upgrade para o Plano Profissional (R$ 49,90/mês) no Descubra Artes para a loja "${store?.name || 'meu ateliê'}".`
+  )}`;
 
   return (
     <div className="space-y-6">
@@ -121,6 +146,76 @@ export default function ProdutosManagerClient({
           <span>Cadastrar Nova Peça</span>
         </button>
       </div>
+
+      {/* Plan Usage & Limits Banner */}
+      {store && (
+        <div className="bg-white p-5 sm:p-6 rounded-3xl border border-[#EDE5D8] shadow-xs space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-xs text-[#1B4332]">
+                {getPlanDisplayName(store.planType)}
+              </span>
+              <span className="text-[11px] text-[#7F4F24]">
+                • {entitlements.maxProducts !== null ? (
+                  <><strong>{products.length}</strong> de <strong>{entitlements.maxProducts}</strong> produtos utilizados</>
+                ) : (
+                  <><strong>{products.length}</strong> produtos cadastrados (Ilimitado)</>
+                )}
+              </span>
+            </div>
+
+            {entitlements.maxProducts !== null && (
+              <a
+                href={whatsappUpgradeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-bold text-[#C85A32] hover:underline flex items-center gap-1 w-fit"
+              >
+                <span>Fazer Upgrade para Ilimitado (R$ 49,90/mês)</span>
+                <ArrowRight size={13} />
+              </a>
+            )}
+          </div>
+
+          {entitlements.maxProducts !== null && (
+            <div className="w-full h-2.5 bg-[#FAF7F2] rounded-full overflow-hidden border border-[#EDE5D8]">
+              <div
+                className={`h-full rounded-full transition-all ${
+                  (entitlements.productLimitPercentage || 0) >= 100
+                    ? 'bg-amber-600'
+                    : 'bg-[#2D6A4F]'
+                }`}
+                style={{ width: `${entitlements.productLimitPercentage}%` }}
+              />
+            </div>
+          )}
+
+          {!entitlements.canAddProduct && (
+            <div className="p-4 rounded-2xl bg-[#FEF9EF] border border-[#EDE5D8] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <div className="flex items-start gap-2.5">
+                <Lock size={16} className="text-[#C85A32] shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold text-[#1B4332] block">
+                    Limite de {entitlements.maxProducts} produtos atingido no Plano Gratuito
+                  </span>
+                  <p className="text-[#7F4F24] text-[11px] mt-0.5">
+                    Faça upgrade para o Plano Profissional e cadastre quantas peças desejar sem nenhum bloqueio.
+                  </p>
+                </div>
+              </div>
+
+              <a
+                href={whatsappUpgradeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 rounded-xl bg-[#1B4332] hover:bg-[#2D6A4F] text-white font-bold text-xs transition-colors shrink-0 text-center"
+              >
+                Falar com Suporte no WhatsApp
+              </a>
+            </div>
+          )}
+        </div>
+      )}
 
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
@@ -262,6 +357,77 @@ export default function ProdutosManagerClient({
           cities={cities}
           storeId={currentStoreId || activeStoreId || 'temp-store'}
         />
+      )}
+
+      {/* Upgrade Limit Modal */}
+      {showUpgradeModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white max-w-md w-full rounded-3xl border border-[#EDE5D8] shadow-2xl p-6 sm:p-8 space-y-5 text-center relative">
+            <button
+              onClick={() => setShowUpgradeModal(false)}
+              className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-700 rounded-full"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="w-14 h-14 rounded-2xl bg-[#FEF9EF] text-[#C85A32] flex items-center justify-center mx-auto border border-[#EDE5D8]">
+              <Lock size={28} />
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="font-serif font-bold text-xl text-[#1B4332]">
+                Limite de Produtos Atingido
+              </h3>
+              <p className="text-xs text-[#7F4F24] leading-relaxed">
+                Seu <strong>Plano Gratuito</strong> permite até <strong>{entitlements.maxProducts} peças cadastradas</strong>. Para adicionar novas peças, fotos extras e destacar seu trabalho, faça upgrade para o <strong>Plano Profissional</strong>.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-[#FAF7F2] border border-[#EDE5D8] text-left space-y-2 text-xs">
+              <div className="font-bold text-[#1B4332] flex items-center justify-between">
+                <span>Plano Profissional</span>
+                <span className="text-[#C85A32]">R$ 49,90/mês</span>
+              </div>
+              <ul className="space-y-1 text-[11px] text-[#7F4F24]">
+                <li className="flex items-center gap-1.5">
+                  <CheckCircle2 size={13} className="text-[#2D6A4F]" />
+                  <span>Produtos & peças ilimitadas</span>
+                </li>
+                <li className="flex items-center gap-1.5">
+                  <CheckCircle2 size={13} className="text-[#2D6A4F]" />
+                  <span>Publicação de Ofertas Locais & Descontos</span>
+                </li>
+                <li className="flex items-center gap-1.5">
+                  <CheckCircle2 size={13} className="text-[#2D6A4F]" />
+                  <span>Selo Oficial de Produtor Verificado</span>
+                </li>
+                <li className="flex items-center gap-1.5">
+                  <CheckCircle2 size={13} className="text-[#2D6A4F]" />
+                  <span>Estatísticas completas de visualizações e cliques</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="space-y-2 pt-2">
+              <a
+                href={whatsappUpgradeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-3.5 px-4 rounded-xl bg-[#1B4332] hover:bg-[#2D6A4F] text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2"
+              >
+                <span>Falar com Atendimento no WhatsApp</span>
+                <ArrowRight size={15} />
+              </a>
+
+              <button
+                onClick={() => setShowUpgradeModal(false)}
+                className="w-full py-2 text-xs text-[#7F4F24] hover:text-[#2C2623] font-medium"
+              >
+                Continuar no plano gratuito
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

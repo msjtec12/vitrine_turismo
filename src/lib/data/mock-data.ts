@@ -1007,6 +1007,14 @@ export function getHydratedStores(): Store[] {
     const productsCount = mockProducts.filter(p => p.storeId === store.id).length;
     return {
       ...store,
+      accountStatus: store.accountStatus || 'ACTIVE',
+      planType: store.planType || 'FREE',
+      planStatus: store.planStatus || 'ACTIVE',
+      planStartedAt: store.planStartedAt || store.createdAt || new Date().toISOString(),
+      planExpiresAt: store.planExpiresAt !== undefined ? store.planExpiresAt : null,
+      billingSource: store.billingSource || 'MANUAL',
+      manualOverrides: store.manualOverrides || {},
+      planHistory: store.planHistory || [],
       city,
       category,
       productsCount,

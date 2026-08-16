@@ -24,9 +24,11 @@ import {
   MessageSquare,
   Award,
 } from 'lucide-react';
-import { Artisan, Store, Product, StoreCompleteness } from '@/types';
+import { Artisan, Store, Product, StoreCompleteness, PlanType } from '@/types';
 import { storeService } from '@/lib/data/store-service';
 import { VerifiedBadge } from '@/components/ui/Badges';
+import { getStoreEffectiveEntitlements, getPlanDisplayName, getAccountStatusBadge, getPlanStatusBadge } from '@/lib/plans/entitlements';
+import PlanEditorModal from '@/components/admin/PlanEditorModal';
 
 interface AdminArtesaoDetailClientProps {
   artisan: Artisan;
@@ -44,6 +46,7 @@ export default function AdminArtesaoDetailClient({
   const router = useRouter();
   const [artisan, setArtisan] = useState<Artisan>(initialArtisan);
   const [store, setStore] = useState<Store | undefined>(initialStore);
+  const [showPlanModal, setShowPlanModal] = useState<boolean>(false);
   const [adminNotes, setAdminNotes] = useState(artisan.adminNotes || store?.adminNotes || '');
   const [showNotesModal, setShowNotesModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
@@ -223,6 +226,16 @@ export default function AdminArtesaoDetailClient({
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          {store && (
+            <button
+              onClick={() => setShowPlanModal(true)}
+              className="px-4 py-2.5 rounded-xl bg-[#1B4332] hover:bg-[#2D6A4F] text-white text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+            >
+              <Sparkles size={14} className="text-[#E9C46A]" />
+              <span>Gerenciar Plano & Permissões</span>
+            </button>
+          )}
+
           <button
             onClick={handleToggleVerified}
             className="px-3.5 py-2 rounded-xl bg-white hover:bg-[#EDE5D8] border border-[#EDE5D8] text-xs font-bold text-[#1B4332] transition-colors flex items-center gap-1.5 cursor-pointer"
@@ -240,6 +253,51 @@ export default function AdminArtesaoDetailClient({
           </button>
         </div>
       </div>
+
+      {/* Plan & Entitlements Overview Card */}
+      {store && (
+        <div className="bg-white p-6 rounded-3xl border border-[#EDE5D8] shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-[#EDE5D8] pb-3">
+            <h3 className="font-serif font-bold text-base text-[#1B4332] flex items-center gap-2">
+              <Sparkles size={16} className="text-[#C85A32]" />
+              <span>Plano & Entitlements da Conta</span>
+            </h3>
+
+            <button
+              onClick={() => setShowPlanModal(true)}
+              className="text-xs font-bold text-[#C85A32] hover:underline"
+            >
+              Editar Plano
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div className="p-3 rounded-2xl bg-[#FAF7F2] border border-[#EDE5D8]">
+              <span className="text-[10px] uppercase font-bold text-[#7F4F24] block">Plano Atual</span>
+              <span className="font-bold text-sm text-[#1B4332]">{getPlanDisplayName(store.planType)}</span>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-[#FAF7F2] border border-[#EDE5D8]">
+              <span className="text-[10px] uppercase font-bold text-[#7F4F24] block">Status da Conta</span>
+              <span className="font-bold text-sm text-[#2C2623]">{store.accountStatus || 'Ativa'}</span>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-[#FAF7F2] border border-[#EDE5D8]">
+              <span className="text-[10px] uppercase font-bold text-[#7F4F24] block">Validade</span>
+              <span className="font-bold text-sm text-[#1B4332]">
+                {store.planExpiresAt ? new Date(store.planExpiresAt).toLocaleDateString('pt-BR') : 'Sem expiração'}
+              </span>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-[#FAF7F2] border border-[#EDE5D8]">
+              <span className="text-[10px] uppercase font-bold text-[#7F4F24] block">Limite de Produtos</span>
+              <span className="font-bold text-sm text-[#1B4332]">
+                {products.length} / {getStoreEffectiveEntitlements(store).maxProducts ?? '∞'}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Invitation Section (if token exists) */}
       {artisan.invitationToken && (
@@ -441,6 +499,19 @@ export default function AdminArtesaoDetailClient({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Plan Editor Master Modal */}
+      {showPlanModal && store && (
+        <PlanEditorModal
+          store={store}
+          onClose={() => setShowPlanModal(false)}
+          onSuccess={(updatedStore) => {
+            setStore(updatedStore);
+            setShowPlanModal(false);
+            router.refresh();
+          }}
+        />
       )}
     </div>
   );

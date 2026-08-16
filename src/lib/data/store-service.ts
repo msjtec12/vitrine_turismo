@@ -18,6 +18,12 @@ import {
   UserProfile,
   Artisan,
   ArtisanStatus,
+  AccountStatus,
+  PlanStatus,
+  PlanType,
+  BillingSource,
+  ManualOverrides,
+  PlanHistoryEntry,
   StoreStatus,
   ProductStatus,
   OnboardingSource,
@@ -26,6 +32,7 @@ import {
   Notification,
   StoreCompleteness,
 } from '@/types';
+import { getStoreEffectiveEntitlements } from '@/lib/plans/entitlements';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://vwemuftnfslqejaahkvd.supabase.co';
 const SUPABASE_KEY =
@@ -159,7 +166,14 @@ function mapDbStoreToStore(db: any): Store {
     verified: db.verified,
     foundingMember: db.founding_member,
     status: db.status,
+    accountStatus: db.account_status || 'ACTIVE',
     planType: db.plan_type || 'FREE',
+    planStatus: db.plan_status || 'ACTIVE',
+    planStartedAt: db.plan_started_at || db.created_at || new Date().toISOString(),
+    planExpiresAt: db.plan_expires_at || null,
+    billingSource: db.billing_source || 'MANUAL',
+    manualOverrides: db.manual_overrides || {},
+    planHistory: db.plan_history || [],
     isFeatured: db.is_featured,
     featuredUntil: db.featured_until,
     rating: Number(db.rating || 5.0),
@@ -631,7 +645,14 @@ export const storeService = {
       verified: false,
       foundingMember: newArtisan.foundingMember,
       status: 'PENDING',
+      accountStatus: 'PENDING',
       planType: 'FREE',
+      planStatus: 'ACTIVE',
+      planStartedAt: new Date().toISOString(),
+      planExpiresAt: null,
+      billingSource: 'MANUAL',
+      manualOverrides: {},
+      planHistory: [],
       isFeatured: false,
       rating: 5.0,
       reviewsCount: 0,
@@ -822,7 +843,14 @@ export const storeService = {
       verified: true,
       foundingMember: newArtisan.foundingMember,
       status: 'APPROVED',
+      accountStatus: 'ACTIVE',
       planType: 'PRO',
+      planStatus: 'ACTIVE',
+      planStartedAt: new Date().toISOString(),
+      planExpiresAt: null,
+      billingSource: 'MANUAL',
+      manualOverrides: {},
+      planHistory: [],
       isFeatured: true,
       rating: 5.0,
       reviewsCount: 0,
@@ -1055,6 +1083,14 @@ export const storeService = {
     totalStores: number;
     approvedStores: number;
     pendingStores: number;
+    activeAccounts: number;
+    suspendedAccounts: number;
+    blockedAccounts: number;
+    freeStores: number;
+    proStores: number;
+    expiredPlans: number;
+    verifiedStores: number;
+    featuredStores: number;
     totalProducts: number;
     pendingProducts: number;
     totalWhatsAppClicks: number;
@@ -1076,6 +1112,15 @@ export const storeService = {
     const totalStores = runtimeStores.length;
     const approvedStores = runtimeStores.filter((s) => s.status === 'APPROVED').length;
     const pendingStores = runtimeStores.filter((s) => s.status === 'PENDING').length;
+    const activeAccounts = runtimeStores.filter((s) => (s.accountStatus || 'ACTIVE') === 'ACTIVE' && s.status !== 'SUSPENDED').length;
+    const suspendedAccounts = runtimeStores.filter((s) => s.accountStatus === 'SUSPENDED' || s.status === 'SUSPENDED').length;
+    const blockedAccounts = runtimeStores.filter((s) => s.accountStatus === 'BLOCKED').length;
+    const freeStores = runtimeStores.filter((s) => (s.planType || 'FREE') === 'FREE').length;
+    const proStores = runtimeStores.filter((s) => s.planType === 'PROFESSIONAL' || s.planType === 'PRO' || s.planType === 'PREMIUM').length;
+    const expiredPlans = runtimeStores.filter((s) => s.planStatus === 'EXPIRED' || (s.planExpiresAt && new Date(s.planExpiresAt).getTime() < Date.now())).length;
+    const verifiedStores = runtimeStores.filter((s) => s.verified).length;
+    const featuredStores = runtimeStores.filter((s) => s.isFeatured).length;
+
     const totalProducts = runtimeProducts.length;
     const pendingProducts = runtimeProducts.filter((p) => p.status === 'PENDING').length;
     const totalWhatsAppClicks = runtimeStores.reduce((acc, s) => acc + s.whatsappClicksCount, 0);
@@ -1100,6 +1145,14 @@ export const storeService = {
       totalStores,
       approvedStores,
       pendingStores,
+      activeAccounts,
+      suspendedAccounts,
+      blockedAccounts,
+      freeStores,
+      proStores,
+      expiredPlans,
+      verifiedStores,
+      featuredStores,
       totalProducts,
       pendingProducts,
       totalWhatsAppClicks,
@@ -1184,12 +1237,109 @@ export const storeService = {
     return runtimeStores[storeIndex];
   },
 
+  async updateStorePlanAndPermissions(
+    storeId: string,
+    params: {
+      planType?: PlanType;
+      planStatus?: PlanStatus;
+      accountStatus?: AccountStatus;
+      planStartedAt?: string;
+      planExpiresAt?: string | null;
+      billingSource?: BillingSource;
+      verified?: boolean;
+      isFeatured?: boolean;
+      featuredUntil?: string;
+      manualOverrides?: ManualOverrides;
+      adminNotes?: string;
+      performedBy?: string;
+    }
+  ): Promise<Store | null> {
+    const storeIndex = runtimeStores.findIndex((s) => s.id === storeId);
+    if (storeIndex === -1) return null;
+
+    const currentStore = runtimeStores[storeIndex];
+    const previousPlan = currentStore.planType;
+    const previousStatus = currentStore.accountStatus || 'ACTIVE';
+
+    const historyEntry: PlanHistoryEntry = {
+      id: generateUUID(),
+      action: params.planType && params.planType !== previousPlan ? `Plano alterado de ${previousPlan} para ${params.planType}` : 'Permissões e status atualizados',
+      previousPlan,
+      newPlan: params.planType || previousPlan,
+      previousStatus,
+      newStatus: params.accountStatus || previousStatus,
+      performedBy: params.performedBy || 'Admin Master',
+      notes: params.adminNotes || '',
+      createdAt: new Date().toISOString(),
+    };
+
+    const updatedStore: Store = {
+      ...currentStore,
+      ...params,
+      planHistory: [historyEntry, ...(currentStore.planHistory || [])],
+      updatedAt: new Date().toISOString(),
+    };
+
+    runtimeStores[storeIndex] = updatedStore;
+
+    // Também atualiza o artesão vinculado se aplicável
+    if (updatedStore.artisanId) {
+      const artIndex = runtimeArtisans.findIndex((a) => a.id === updatedStore.artisanId);
+      if (artIndex !== -1) {
+        runtimeArtisans[artIndex] = {
+          ...runtimeArtisans[artIndex],
+          verified: params.verified !== undefined ? params.verified : runtimeArtisans[artIndex].verified,
+          status: params.accountStatus === 'SUSPENDED' ? 'SUSPENDED' : params.accountStatus === 'BLOCKED' ? 'REJECTED' : 'APPROVED',
+          adminNotes: params.adminNotes || runtimeArtisans[artIndex].adminNotes,
+          updatedAt: new Date().toISOString(),
+        };
+      }
+    }
+
+    runtimeAuditLogs.unshift({
+      id: generateUUID(),
+      action: 'UPDATE_STORE_PLAN_AND_PERMISSIONS',
+      entityType: 'STORE',
+      entityId: storeId,
+      userEmail: params.performedBy || 'master@descubraartes.com.br',
+      metadata: {
+        previousPlan,
+        newPlan: params.planType,
+        previousStatus,
+        newStatus: params.accountStatus,
+        notes: params.adminNotes,
+      },
+      createdAt: new Date().toISOString(),
+    });
+
+    persistLocalCustomData();
+    return updatedStore;
+  },
+
   async createProduct(
     payload: Omit<Product, 'id' | 'createdAt' | 'updatedAt' | 'viewsCount' | 'whatsappClicksCount' | 'favoritesCount' | 'slug' | 'status'> & {
       slug?: string;
       status?: ProductStatus;
     }
   ): Promise<Product> {
+    // 1. Backend Entitlements Validation
+    const store = runtimeStores.find((s) => s.id === payload.storeId);
+    const existingStoreProducts = runtimeProducts.filter((p) => p.storeId === payload.storeId);
+    
+    if (store) {
+      const entitlements = getStoreEffectiveEntitlements(store, existingStoreProducts.length);
+      
+      if (entitlements.isBlocked) {
+        throw new Error('Sua conta está bloqueada pelo administrador. Entre em contato com o suporte.');
+      }
+      if (entitlements.isSuspended) {
+        throw new Error('Sua conta está suspensa temporariamente.');
+      }
+      if (entitlements.maxProducts !== null && existingStoreProducts.length >= entitlements.maxProducts) {
+        throw new Error(`Seu plano atual permite até ${entitlements.maxProducts} produtos. Faça upgrade para continuar cadastrando.`);
+      }
+    }
+
     const slug =
       payload.slug ||
       payload.name
@@ -1210,6 +1360,9 @@ export const storeService = {
     };
 
     runtimeProducts.unshift(newProduct);
+    if (store) {
+      store.productsCount = (store.productsCount || 0) + 1;
+    }
     persistLocalCustomData();
     return newProduct;
   },
@@ -1217,6 +1370,17 @@ export const storeService = {
   async updateProduct(id: string, payload: Partial<Product>): Promise<Product | null> {
     const prodIndex = runtimeProducts.findIndex((p) => p.id === id);
     if (prodIndex === -1) return null;
+
+    const currentProd = runtimeProducts[prodIndex];
+    const store = runtimeStores.find((s) => s.id === currentProd.storeId);
+
+    // 2. Backend Entitlements Validation on Offers
+    if (payload.isPromo === true && store) {
+      const entitlements = getStoreEffectiveEntitlements(store);
+      if (!entitlements.canCreateOffers) {
+        throw new Error('As Ofertas Locais são exclusivas do Plano Profissional.');
+      }
+    }
 
     runtimeProducts[prodIndex] = {
       ...runtimeProducts[prodIndex],
