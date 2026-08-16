@@ -1,9 +1,11 @@
 import React from 'react';
-import { storeService } from '@/lib/data/store-service';
 import LojaEditorClient from './LojaEditorClient';
 
-export default async function PainelLojaPage() {
-  const store = await storeService.getStoreById('store-ceramica-da-terra');
+export const metadata = {
+  title: 'Editar Minha Loja | Painel do Artesão',
+  description: 'Personalize o perfil, história, fotos e contatos do seu ateliê.',
+};
 
-  return <LojaEditorClient initialStore={store} />;
+export default function PainelLojaPage() {
+  return <LojaEditorClient />;
 }

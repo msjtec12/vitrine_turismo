@@ -13,6 +13,7 @@ import {
   Settings,
   ExternalLink,
   Clock,
+  PlusCircle,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { storeService } from '@/lib/data/store-service';
@@ -39,8 +40,8 @@ export default function PainelLayout({ children }: { children: React.ReactNode }
           return;
         }
       }
-      const all = await storeService.getAllStoresForAdmin();
-      setStore(all[0] || null);
+      // If user has no store, do NOT fallback to seed stores!
+      setStore(null);
     }
 
     loadStore();
@@ -56,7 +57,7 @@ export default function PainelLayout({ children }: { children: React.ReactNode }
     { label: 'Configurações', href: '/painel/configuracoes', icon: <Settings size={18} /> },
   ];
 
-  const storeName = store?.name || 'Seu Ateliê';
+  const storeName = store?.name || (user?.fullName ? `Ateliê de ${user.fullName.split(' ')[0]}` : 'Meu Ateliê');
   const isApproved = store?.status === 'APPROVED';
 
   return (
@@ -72,7 +73,7 @@ export default function PainelLayout({ children }: { children: React.ReactNode }
             <span className="text-xs text-white/90 font-medium truncate max-w-[200px] sm:max-w-xs">
               {storeName}
             </span>
-            {store?.status === 'PENDING' && (
+            {store && store.status === 'PENDING' && (
               <span className="text-[10px] bg-[#E9C46A] text-[#1B4332] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
                 <Clock size={10} />
                 <span>Em Análise</span>
@@ -81,7 +82,7 @@ export default function PainelLayout({ children }: { children: React.ReactNode }
           </div>
 
           <div className="flex items-center gap-3 text-xs">
-            {isApproved && store?.slug ? (
+            {store && isApproved && store.slug ? (
               <Link
                 href={`/loja/${store.slug}`}
                 target="_blank"
@@ -90,12 +91,20 @@ export default function PainelLayout({ children }: { children: React.ReactNode }
                 <span>Ver Minha Loja Pública</span>
                 <ExternalLink size={12} />
               </Link>
-            ) : (
+            ) : store ? (
               <Link
                 href="/painel/loja"
                 className="inline-flex items-center gap-1 bg-white/10 hover:bg-white/20 text-white/90 px-3 py-1 rounded-lg transition-colors text-[11px]"
               >
                 <span>Editar Dados do Ateliê</span>
+              </Link>
+            ) : (
+              <Link
+                href="/quero-vender/cadastro"
+                className="inline-flex items-center gap-1.5 bg-[#C85A32] hover:bg-[#A4421F] text-white px-3.5 py-1.5 rounded-lg transition-colors text-xs font-bold shadow-xs"
+              >
+                <PlusCircle size={13} />
+                <span>Criar Minha Loja</span>
               </Link>
             )}
           </div>

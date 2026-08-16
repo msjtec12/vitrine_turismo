@@ -1,40 +1,42 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Store as StoreIcon, Check, ExternalLink, Sparkles, MapPin } from 'lucide-react';
+import { Store as StoreIcon, Check, ExternalLink, Sparkles, MapPin, Plus } from 'lucide-react';
 import { Store } from '@/types';
 import { storeService } from '@/lib/data/store-service';
 import { useAuth } from '@/lib/auth-context';
 import ImageUpload from '@/components/ui/ImageUpload';
 import CepAddressForm from '@/components/ui/CepAddressForm';
 
-export default function LojaEditorClient({ initialStore }: { initialStore: Store | null }) {
-  const { activeStoreId, user } = useAuth();
-  const [store, setStore] = useState<Store | null>(initialStore);
-  const [name, setName] = useState(store?.name || '');
-  const [artisanName, setArtisanName] = useState(store?.artisanName || '');
-  const [bio, setBio] = useState(store?.bio || '');
-  const [story, setStory] = useState(store?.story || '');
-  const [processDescription, setProcessDescription] = useState(store?.processDescription || '');
-  const [whatsapp, setWhatsapp] = useState(store?.whatsapp || '');
-  const [instagram, setInstagram] = useState(store?.instagram || '');
-  const [openingHours, setOpeningHours] = useState(store?.openingHours || '');
-  const [coverUrl, setCoverUrl] = useState(store?.coverUrl || '');
-  const [logoUrl, setLogoUrl] = useState(store?.logoUrl || '');
+export default function LojaEditorClient({ initialStore }: { initialStore?: Store | null }) {
+  const { activeStoreId, setActiveStoreId, user } = useAuth();
+  const [store, setStore] = useState<Store | null>(initialStore || null);
+  const [name, setName] = useState('');
+  const [artisanName, setArtisanName] = useState(user?.fullName || '');
+  const [bio, setBio] = useState('');
+  const [story, setStory] = useState('');
+  const [processDescription, setProcessDescription] = useState('');
+  const [whatsapp, setWhatsapp] = useState('');
+  const [instagram, setInstagram] = useState('');
+  const [openingHours, setOpeningHours] = useState('Segunda a Sábado, das 9h às 18h');
+  const [coverUrl, setCoverUrl] = useState('');
+  const [logoUrl, setLogoUrl] = useState('');
 
   // Address fields
   const [cep, setCep] = useState('');
-  const [street, setStreet] = useState(store?.address || '');
+  const [street, setStreet] = useState('');
   const [number, setNumber] = useState('');
-  const [neighborhood, setNeighborhood] = useState(store?.neighborhood || 'São Roque');
+  const [neighborhood, setNeighborhood] = useState('São Roque');
   const [complement, setComplement] = useState('');
 
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  React.useEffect(() => {
+  useEffect(() => {
     async function refreshStore() {
+      setLoading(true);
       let s: Store | null = null;
       if (activeStoreId) {
         s = await storeService.getStoreById(activeStoreId);
@@ -48,18 +50,32 @@ export default function LojaEditorClient({ initialStore }: { initialStore: Store
       if (s) {
         setStore(s);
         setName(s.name || '');
-        setArtisanName(s.artisanName || '');
+        setArtisanName(s.artisanName || user?.fullName || '');
         setBio(s.bio || '');
         setStory(s.story || '');
         setProcessDescription(s.processDescription || '');
         setWhatsapp(s.whatsapp || '');
         setInstagram(s.instagram || '');
-        setOpeningHours(s.openingHours || '');
+        setOpeningHours(s.openingHours || 'Segunda a Sábado, das 9h às 18h');
         setCoverUrl(s.coverUrl || '');
         setLogoUrl(s.logoUrl || '');
         setStreet(s.address || '');
         setNeighborhood(s.neighborhood || 'São Roque');
+      } else {
+        setStore(null);
+        setName('');
+        setArtisanName(user?.fullName || '');
+        setBio('');
+        setStory('');
+        setProcessDescription('');
+        setWhatsapp('');
+        setInstagram('');
+        setCoverUrl('');
+        setLogoUrl('');
+        setStreet('');
+        setNeighborhood('São Roque');
       }
+      setLoading(false);
     }
     refreshStore();
   }, [activeStoreId, user, initialStore]);
@@ -76,41 +92,75 @@ export default function LojaEditorClient({ initialStore }: { initialStore: Store
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!store) return;
     setIsSaving(true);
 
     const fullAddress = formatFullAddress();
 
-    const updated = await storeService.updateStore(store.id, {
-      name,
-      artisanName,
-      bio,
-      story,
-      processDescription,
-      whatsapp,
-      instagram,
-      address: fullAddress,
-      neighborhood,
-      openingHours,
-      coverUrl,
-      logoUrl,
-    });
+    if (store) {
+      // Update existing store
+      const updated = await storeService.updateStore(store.id, {
+        name,
+        artisanName,
+        bio,
+        story,
+        processDescription,
+        whatsapp,
+        instagram,
+        address: fullAddress,
+        neighborhood,
+        openingHours,
+        coverUrl,
+        logoUrl,
+      });
 
-    if (updated) {
-      setStore(updated);
-      setIsSaved(true);
-      setTimeout(() => setIsSaved(false), 3000);
+      if (updated) {
+        setStore(updated);
+      }
+    } else {
+      // Create new store for this user
+      const { store: newStore } = await storeService.createArtisanSelfService({
+        fullName: artisanName || user?.fullName || 'Artesão',
+        email: user?.email || 'artesao@descubraartes.com.br',
+        phone: whatsapp || '11999999999',
+        storeName: name || 'Meu Ateliê',
+        description: bio || 'Ateliê de artesanato regional em São Roque',
+        story,
+        cityId: 'city-sao-roque',
+        categoryId: 'cat-ceramica',
+        whatsapp: whatsapp || '11999999999',
+        instagram,
+        address: fullAddress || 'São Roque - SP',
+        neighborhood,
+        logoUrl,
+        coverUrl,
+        products: [],
+      });
+
+      setStore(newStore);
+      setActiveStoreId(newStore.id);
     }
+
     setIsSaving(false);
+    setIsSaved(true);
+    setTimeout(() => setIsSaved(false), 3000);
   };
 
+  if (loading) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <div className="h-28 bg-white rounded-3xl border border-[#EDE5D8]" />
+        <div className="h-96 bg-white rounded-3xl border border-[#EDE5D8]" />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="bg-white p-6 rounded-3xl border border-[#EDE5D8] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white p-6 sm:p-8 rounded-3xl border border-[#EDE5D8] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-serif font-bold text-2xl text-[#1B4332] flex items-center gap-2">
-            <StoreIcon size={22} className="text-[#C85A32]" />
+          <h1 className="font-serif font-bold text-2xl sm:text-3xl text-[#1B4332] flex items-center gap-2">
+            <StoreIcon size={24} className="text-[#C85A32]" />
             <span>Perfil do Ateliê & História</span>
           </h1>
           <p className="text-xs text-[#7F4F24] mt-1">
@@ -118,11 +168,11 @@ export default function LojaEditorClient({ initialStore }: { initialStore: Store
           </p>
         </div>
 
-        {store && (
+        {store?.status === 'APPROVED' && store?.slug && (
           <Link
             href={`/loja/${store.slug}`}
             target="_blank"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#FAF7F2] hover:bg-[#EDE5D8] text-xs font-bold text-[#1B4332] border border-[#EDE5D8] transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#FAF7F2] hover:bg-[#EDE5D8] border border-[#EDE5D8] text-[#1B4332] text-xs font-bold transition-all shadow-xs shrink-0"
           >
             <span>Ver Loja Pública</span>
             <ExternalLink size={13} />
@@ -130,18 +180,18 @@ export default function LojaEditorClient({ initialStore }: { initialStore: Store
         )}
       </div>
 
+      {isSaved && (
+        <div className="p-4 bg-[#D8F3DC] text-[#1B4332] border border-[#2D6A4F]/20 rounded-2xl flex items-center gap-2 text-xs font-bold animate-in fade-in">
+          <Check size={18} />
+          <span>Informações do ateliê salvas com sucesso!</span>
+        </div>
+      )}
+
       {/* Form */}
       <form onSubmit={handleSave} className="bg-white p-6 sm:p-8 rounded-3xl border border-[#EDE5D8] shadow-xs space-y-6">
-        {isSaved && (
-          <div className="p-4 rounded-2xl bg-[#D8F3DC] text-[#1B4332] text-xs font-bold flex items-center gap-2 border border-[#2D6A4F]/20">
-            <Check size={16} />
-            <span>Informações do ateliê salvas com sucesso!</span>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-[#7F4F24] mb-1.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold uppercase tracking-wider text-[#7F4F24]">
               Nome da Loja / Ateliê *
             </label>
             <input
@@ -149,12 +199,13 @@ export default function LojaEditorClient({ initialStore }: { initialStore: Store
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-[#EDE5D8] text-sm text-[#2C2623] focus:border-[#C85A32] outline-hidden font-medium"
+              placeholder="Ex: Ateliê Barro Vivo"
+              className="w-full px-4 py-3 rounded-xl border border-[#EDE5D8] bg-[#FAF7F2] text-xs text-[#2C2623] focus:bg-white focus:border-[#1B4332] focus:outline-hidden transition-all"
             />
           </div>
 
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-[#7F4F24] mb-1.5">
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold uppercase tracking-wider text-[#7F4F24]">
               Nome do Artesão / Mestres *
             </label>
             <input
@@ -162,152 +213,143 @@ export default function LojaEditorClient({ initialStore }: { initialStore: Store
               required
               value={artisanName}
               onChange={(e) => setArtisanName(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-[#EDE5D8] text-sm text-[#2C2623] focus:border-[#C85A32] outline-hidden font-medium"
+              placeholder="Ex: Maria Silveira"
+              className="w-full px-4 py-3 rounded-xl border border-[#EDE5D8] bg-[#FAF7F2] text-xs text-[#2C2623] focus:bg-white focus:border-[#1B4332] focus:outline-hidden transition-all"
             />
           </div>
         </div>
 
-        {/* Bio */}
-        <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-[#7F4F24] mb-1.5">
+        <div className="space-y-1.5">
+          <label className="block text-xs font-bold uppercase tracking-wider text-[#7F4F24]">
             Descrição Curta (Bio para os cards)
           </label>
           <textarea
             rows={2}
             value={bio}
             onChange={(e) => setBio(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl border border-[#EDE5D8] text-xs text-[#2C2623] focus:border-[#C85A32] outline-hidden leading-relaxed"
+            placeholder="Ex: Peças em cerâmica artesanal de alta temperatura e esmaltes naturais."
+            className="w-full px-4 py-3 rounded-xl border border-[#EDE5D8] bg-[#FAF7F2] text-xs text-[#2C2623] focus:bg-white focus:border-[#1B4332] focus:outline-hidden transition-all"
           />
         </div>
 
-        {/* Story */}
-        <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-[#7F4F24] mb-1.5">
-            Sua História & Tradição (Seção &ldquo;Sobre o Artesão&rdquo;)
+        <div className="space-y-1.5">
+          <label className="block text-xs font-bold uppercase tracking-wider text-[#7F4F24]">
+            Sua História & Tradição (Seção "Sobre o Artesão")
           </label>
           <textarea
             rows={4}
             value={story}
             onChange={(e) => setStory(e.target.value)}
-            placeholder="Conte sua trajetória, há quantos anos produz em São Roque, a conexão com a cultura local..."
-            className="w-full px-4 py-2.5 rounded-xl border border-[#EDE5D8] text-xs text-[#2C2623] focus:border-[#C85A32] outline-hidden leading-relaxed"
+            placeholder="Conte aos turistas como você começou, a tradição familiar e o amor pelo artesanato regional de São Roque..."
+            className="w-full px-4 py-3 rounded-xl border border-[#EDE5D8] bg-[#FAF7F2] text-xs text-[#2C2623] focus:bg-white focus:border-[#1B4332] focus:outline-hidden transition-all"
           />
         </div>
 
-        {/* Process description */}
-        <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-[#7F4F24] mb-1.5">
+        <div className="space-y-1.5">
+          <label className="block text-xs font-bold uppercase tracking-wider text-[#7F4F24]">
             Processo de Produção e Técnicas Utilizadas
           </label>
           <textarea
             rows={3}
             value={processDescription}
             onChange={(e) => setProcessDescription(e.target.value)}
-            placeholder="Descreva passo a passo como as matérias-primas são transformadas..."
-            className="w-full px-4 py-2.5 rounded-xl border border-[#EDE5D8] text-xs text-[#2C2623] focus:border-[#C85A32] outline-hidden leading-relaxed"
+            placeholder="Ex: Torno manual, queima em forno a lenha a 1240ºC e esmaltes formulados no próprio ateliê com cinzas da poda de videiras..."
+            className="w-full px-4 py-3 rounded-xl border border-[#EDE5D8] bg-[#FAF7F2] text-xs text-[#2C2623] focus:bg-white focus:border-[#1B4332] focus:outline-hidden transition-all"
           />
         </div>
 
-        {/* Contacts */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-[#EDE5D8]">
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-[#7F4F24] mb-1.5">
-              WhatsApp para Vendas *
+        {/* Visual Identity: Cover & Logo */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-[#EDE5D8]">
+          <ImageUpload
+            label="Logo ou Foto do Artesão"
+            helperText="Formato quadrado (1:1), PNG ou JPG."
+            value={logoUrl}
+            onChange={setLogoUrl}
+            aspectRatio="square"
+          />
+
+          <ImageUpload
+            label="Foto de Capa do Ateliê"
+            helperText="Foto horizontal (16:9) do seu espaço ou bancada."
+            value={coverUrl}
+            onChange={setCoverUrl}
+            aspectRatio="banner"
+          />
+        </div>
+
+        {/* Contact info */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-[#EDE5D8]">
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold uppercase tracking-wider text-[#7F4F24]">
+              WhatsApp para Pedidos (com DDD) *
             </label>
             <input
               type="text"
               required
               value={whatsapp}
               onChange={(e) => setWhatsapp(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-[#EDE5D8] text-sm text-[#2C2623] focus:border-[#C85A32] outline-hidden font-medium"
+              placeholder="Ex: 11999998888"
+              className="w-full px-4 py-3 rounded-xl border border-[#EDE5D8] bg-[#FAF7F2] text-xs text-[#2C2623] focus:bg-white focus:border-[#1B4332] focus:outline-hidden transition-all"
             />
           </div>
 
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-[#7F4F24] mb-1.5">
-              Instagram (@usuario)
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold uppercase tracking-wider text-[#7F4F24]">
+              Instagram (opcional)
             </label>
             <input
               type="text"
               value={instagram}
               onChange={(e) => setInstagram(e.target.value)}
-              placeholder="@ceramicadaterrasr"
-              className="w-full px-4 py-2.5 rounded-xl border border-[#EDE5D8] text-sm text-[#2C2623] focus:border-[#C85A32] outline-hidden"
+              placeholder="Ex: @ateliebarrovivo"
+              className="w-full px-4 py-3 rounded-xl border border-[#EDE5D8] bg-[#FAF7F2] text-xs text-[#2C2623] focus:bg-white focus:border-[#1B4332] focus:outline-hidden transition-all"
             />
           </div>
         </div>
 
-        {/* Location with CEP Verification */}
-        <div className="pt-4 border-t border-[#EDE5D8] space-y-3">
-          <div className="flex items-center gap-2">
-            <MapPin size={18} className="text-[#C85A32]" />
-            <h3 className="font-serif font-bold text-base text-[#1B4332]">
-              Endereço Físico do Ateliê & CEP
-            </h3>
+        {/* Address with CEP */}
+        <div className="pt-4 border-t border-[#EDE5D8] space-y-4">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#C85A32]">
+            <MapPin size={15} />
+            <span>Endereço e Localização do Ateliê em São Roque</span>
           </div>
 
           <CepAddressForm
             cep={cep}
-            onCepChange={setCep}
             street={street}
-            onStreetChange={setStreet}
             number={number}
-            onNumberChange={setNumber}
             neighborhood={neighborhood}
-            onNeighborhoodChange={setNeighborhood}
             complement={complement}
-            onComplementChange={setComplement}
             city="São Roque"
             state="SP"
-          />
-
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-[#7F4F24] mb-1.5 mt-3">
-              Horário de Atendimento
-            </label>
-            <input
-              type="text"
-              value={openingHours}
-              onChange={(e) => setOpeningHours(e.target.value)}
-              placeholder="Ex: Seg a Sáb das 09h às 18h / Dom das 10h às 16h"
-              className="w-full px-4 py-2.5 rounded-xl border border-[#EDE5D8] text-xs text-[#2C2623] focus:border-[#C85A32] outline-hidden"
-            />
-          </div>
-        </div>
-
-        {/* Photos Upload */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-[#EDE5D8]">
-          <ImageUpload
-            label="Logo ou Foto do Artesão"
-            helperText="Carregue uma imagem quadrada para o perfil"
-            aspectRatio="square"
-            value={logoUrl}
-            onChange={setLogoUrl}
-          />
-
-          <ImageUpload
-            label="Foto de Capa do Ateliê"
-            helperText="Carregue uma foto em alta resolução da sua vitrine"
-            aspectRatio="video"
-            value={coverUrl}
-            onChange={setCoverUrl}
+            onCepChange={setCep}
+            onStreetChange={setStreet}
+            onNumberChange={setNumber}
+            onNeighborhoodChange={setNeighborhood}
+            onComplementChange={setComplement}
           />
         </div>
 
-        <div className="pt-4 border-t border-[#EDE5D8] flex items-center justify-end">
+        <div className="space-y-1.5 pt-2">
+          <label className="block text-xs font-bold uppercase tracking-wider text-[#7F4F24]">
+            Horário de Atendimento / Visitação
+          </label>
+          <input
+            type="text"
+            value={openingHours}
+            onChange={(e) => setOpeningHours(e.target.value)}
+            placeholder="Ex: Sexta a Domingo, das 10h às 18h"
+            className="w-full px-4 py-3 rounded-xl border border-[#EDE5D8] bg-[#FAF7F2] text-xs text-[#2C2623] focus:bg-white focus:border-[#1B4332] focus:outline-hidden transition-all"
+          />
+        </div>
+
+        <div className="pt-6 border-t border-[#EDE5D8] flex items-center justify-end">
           <button
             type="submit"
             disabled={isSaving}
-            className="px-8 py-3.5 rounded-xl bg-[#1B4332] hover:bg-[#2D6A4F] text-white font-bold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer"
+            className="px-8 py-3.5 rounded-xl bg-[#1B4332] hover:bg-[#2D6A4F] text-white text-xs font-bold shadow-md transition-all cursor-pointer disabled:opacity-50"
           >
-            {isSaving ? (
-              <span>Salvando alterações...</span>
-            ) : (
-              <>
-                <Check size={16} />
-                <span>Salvar Alterações da Loja</span>
-              </>
-            )}
+            {isSaving ? 'Salvando...' : store ? 'Salvar Alterações' : 'Criar e Publicar Ateliê'}
           </button>
         </div>
       </form>

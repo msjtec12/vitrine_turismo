@@ -13,16 +13,17 @@ import {
   XCircle,
   ExternalLink,
   Store as StoreIcon,
+  Store,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { storeService } from '@/lib/data/store-service';
-import { Store, Product } from '@/types';
+import { Store as StoreType, Product } from '@/types';
 import ArtisanStatsCard from '@/components/artisan/ArtisanStatsCard';
 import ArtisanViewsChart from '@/components/artisan/ArtisanViewsChart';
 
 export default function PainelDashboardClient() {
   const { user, activeStoreId } = useAuth();
-  const [store, setStore] = useState<Store | null>(null);
+  const [store, setStore] = useState<StoreType | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -31,7 +32,7 @@ export default function PainelDashboardClient() {
     async function loadData() {
       setLoading(true);
       try {
-        let currentStore: Store | null = null;
+        let currentStore: StoreType | null = null;
 
         // 1. Try activeStoreId from auth context
         if (activeStoreId) {
@@ -43,12 +44,6 @@ export default function PainelDashboardClient() {
           currentStore = await storeService.getStoreByEmail(user.email);
         }
 
-        // 3. Fallback to first available store
-        if (!currentStore) {
-          const all = await storeService.getAllStoresForAdmin();
-          currentStore = all[0] || null;
-        }
-
         setStore(currentStore);
 
         if (currentStore) {
@@ -58,6 +53,9 @@ export default function PainelDashboardClient() {
           ]);
           setProducts(storeProds);
           setStats(storeStats);
+        } else {
+          setProducts([]);
+          setStats(null);
         }
       } catch (err) {
         console.error('Error loading artisan dashboard:', err);
@@ -83,11 +81,46 @@ export default function PainelDashboardClient() {
     );
   }
 
+  // If user has no store created yet
+  if (!store) {
+    return (
+      <div className="space-y-8">
+        <div className="bg-white p-8 sm:p-10 rounded-3xl border border-[#EDE5D8] shadow-xs text-center space-y-4">
+          <div className="w-16 h-16 rounded-full bg-[#D8F3DC] text-[#1B4332] flex items-center justify-center mx-auto shadow-xs">
+            <Store size={32} />
+          </div>
+          <div className="space-y-2 max-w-lg mx-auto">
+            <h1 className="font-serif font-bold text-2xl sm:text-3xl text-[#1B4332]">
+              Bem-vindo ao Descubra Artes, {user?.fullName || 'Artesão'}! 👋
+            </h1>
+            <p className="text-xs sm:text-sm text-[#7F4F24]">
+              Sua conta está criada. Para começar a exibir seus produtos na vitrine de São Roque e receber turistas no WhatsApp, cadastre seu ateliê.
+            </p>
+          </div>
+
+          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              href="/quero-vender/cadastro"
+              className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#1B4332] hover:bg-[#2D6A4F] text-white font-bold text-xs shadow-xs transition-colors flex items-center justify-center gap-2"
+            >
+              <Plus size={16} />
+              <span>Cadastrar Minha Loja & Produtos</span>
+            </Link>
+            <Link
+              href="/painel/loja"
+              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-[#FAF7F2] hover:bg-[#EDE5D8] text-[#4A3525] font-semibold text-xs transition-colors"
+            >
+              Preencher Dados do Ateliê
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const completeness = store ? storeService.calculateStoreCompleteness(store, products) : undefined;
 
   const getStatusBanner = () => {
-    if (!store) return null;
-
     if (store.status === 'APPROVED') {
       return (
         <div className="bg-[#D8F3DC] border border-[#2D6A4F]/20 p-4 sm:p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[#1B4332]">

@@ -29,7 +29,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setActiveStoreId = (id: string) => {
     setActiveStoreIdState(id);
     try {
-      localStorage.setItem('descubra_artes_store_id', id);
+      if (id) {
+        localStorage.setItem('descubra_artes_store_id', id);
+      } else {
+        localStorage.removeItem('descubra_artes_store_id');
+      }
     } catch {}
   };
 
@@ -101,19 +105,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const loginWithCredentials = async (email: string, password: string): Promise<{ user: UserProfile; role: UserRole }> => {
+    const cleanEmail = email.toLowerCase().trim();
+
     // Try Supabase Auth first
     if (supabase) {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: cleanEmail,
         password,
       });
 
       if (!error && data.user) {
-        const role: UserRole = email.includes('admin') ? 'ADMIN' : 'ARTISAN';
+        const role: UserRole = cleanEmail.includes('admin') ? 'ADMIN' : 'ARTISAN';
         const profile: UserProfile = {
           id: data.user.id,
-          email,
-          fullName: data.user.user_metadata?.full_name || email.split('@')[0],
+          email: cleanEmail,
+          fullName: data.user.user_metadata?.full_name || cleanEmail.split('@')[0],
           role,
           createdAt: data.user.created_at,
         };
@@ -121,27 +127,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           localStorage.setItem('descubra_artes_user', JSON.stringify(profile));
         } catch {}
+
+        // Resolve store
+        import('./data/store-service').then(({ storeService }) => {
+          storeService.getStoreByEmail(cleanEmail).then((s) => {
+            if (s) setActiveStoreId(s.id);
+            else setActiveStoreId('');
+          });
+        });
+
         return { user: profile, role };
       }
     }
 
     // Direct credentials verification
-    const cleanEmail = email.toLowerCase().trim();
     let role: UserRole = 'ARTISAN';
-    let fullName = email.split('@')[0];
+    let fullName = cleanEmail.split('@')[0];
 
     if (cleanEmail === 'admin@descubraartes.com.br' || cleanEmail.includes('admin')) {
       role = 'ADMIN';
       fullName = 'Administrador Regional';
-    } else if (cleanEmail.includes('claudio')) {
-      role = 'ARTISAN';
-      fullName = 'Mestre Cláudio Fontana';
-      setActiveStoreId('11111111-2222-3333-4444-111111111111');
     }
 
     const profile: UserProfile = {
       id: `user-${Date.now()}`,
-      email,
+      email: cleanEmail,
       fullName,
       role,
       createdAt: new Date().toISOString(),
@@ -152,14 +162,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('descubra_artes_user', JSON.stringify(profile));
     } catch {}
 
+    // Resolve store for email
+    import('./data/store-service').then(({ storeService }) => {
+      storeService.getStoreByEmail(cleanEmail).then((s) => {
+        if (s) setActiveStoreId(s.id);
+        else setActiveStoreId('');
+      });
+    });
+
     return { user: profile, role };
   };
 
   const loginWithEmail = (email: string, role: UserRole = 'ARTISAN', storeId?: string, fullName?: string) => {
+    const cleanEmail = email.toLowerCase().trim();
     const profile: UserProfile = {
       id: `user-${Date.now()}`,
-      email,
-      fullName: fullName || email.split('@')[0],
+      email: cleanEmail,
+      fullName: fullName || cleanEmail.split('@')[0],
       role,
       createdAt: new Date().toISOString(),
     };
@@ -168,6 +187,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('descubra_artes_user', JSON.stringify(profile));
       if (storeId) {
         setActiveStoreId(storeId);
+      } else {
+        import('./data/store-service').then(({ storeService }) => {
+          storeService.getStoreByEmail(cleanEmail).then((s) => {
+            if (s) setActiveStoreId(s.id);
+            else setActiveStoreId('');
+          });
+        });
       }
     } catch {}
   };
@@ -179,7 +205,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch {}
     }
     setUser(null);
-    setActiveStoreIdState('');
+    setActiveStoreId('');
     try {
       localStorage.removeItem('descubra_artes_user');
       localStorage.removeItem('descubra_artes_store_id');
